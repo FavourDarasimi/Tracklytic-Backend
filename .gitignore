@@ -1,0 +1,59 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+task/
+
+# Django migrations (optional — keep if sharing DB structure)
+**/migrations/*.pyc
+**/migrations/__pycache__/
+**/migrations/*.log
+
+migrations/
+# Django local settings (if separated)
+local_settings.py
+
+# Database files (if using SQLite locally)
+*.sqlite3
+*.db
+
+# Media/uploads (optional — only if user uploads are not needed in repo)
+media/
+uploads/
+
+# Static files (collected)
+staticfiles/
+static/
+static_root/
+
+# Compiled translations
+*.mo
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Testing
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# pylint
+pylint-report.txt
+pylint-output.txt
+
+
+# Logs
+*.log
+
+.env
