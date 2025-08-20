@@ -87,17 +87,19 @@ class AddTransacion(APIView):
                 )
                 serializer.validated_data['savings_note'] = savings_note
 
-            # Check if transaction is recurring   
-            recurring = serializer.validated_data['recurring']
-            category = processed_data['category']
-            amount = serializer.validated_data['amount']
-            recurring_message=None
-            if recurring:
-                # Create recurring transaction using service
-                recurring_message=TransactionService.create_recurring_transaction(data, request.user,category, amount)
+            
             
             # Save transaction
             transaction_instance = serializer.save()
+
+    # Check if transaction is recurring   
+            recurring = transaction_instance.recurring
+            category = processed_data['category']
+            amount = transaction_instance.amount
+            recurring_message=None
+            if recurring:
+                # Create recurring transaction using service
+                recurring_message=TransactionService.create_recurring_transaction(data, request.user,category, amount, transaction_instance)
 
             # Process savings and limits
             savings_message = SavingsService.process_savings_from_income(transaction_instance)

@@ -3,15 +3,15 @@ from .utils import validate_category_exists, validate_saving_plan_exists
 
 
 class TransactionService:
-    """
-    Service class for handling transaction-related business logic
-    """
+    
+    # Service class for handling transaction-related business logic
+    
     
     @staticmethod
     def process_transaction_data(data, user):
-        """
-        Process and validate transaction data
-        """
+        
+        #Process and validate transaction data
+        
         category_id = data.get('category')
         savings_id = data.get('savings')
         
@@ -34,9 +34,9 @@ class TransactionService:
     
     @staticmethod
     def determine_savings_note(saving, savings_percentage, transaction_type, add_savings):
-        """
-        Determine the appropriate savings note based on transaction conditions
-        """
+        
+        #Determine the appropriate savings note based on transaction conditions
+        
         if (saving.savings_reached_amount >= saving.savings_amount and 
             transaction_type == 'Credit' and add_savings):
             return 'Saving Goal Reached so no amount will be deducted'
@@ -53,7 +53,8 @@ class TransactionService:
             return f'{savings_percentage}% has been deducted from this Credit Transaction'
 
     @staticmethod
-    def create_recurring_transaction(data, user, category,amount):
+    def create_recurring_transaction(data, user, category,amount,transaction):
+        # Create a recurring transaction based on the provided data
         frequency = data.get('frequency')
         next_due_date = data.get('next_due_date')
         end_date = data.get('end_date')
@@ -61,6 +62,7 @@ class TransactionService:
         RecurringTransaction.objects.create(
             user=user,
             category=category,
+            transaction=transaction,
             frequency=frequency,
             amount=amount,
             next_due_date=next_due_date,
@@ -71,15 +73,15 @@ class TransactionService:
 
 
 class SavingPlanService:
-    """
-    Service class for handling saving plan-related business logic
-    """
+    
+    #Service class for handling saving plan-related business logic
+    
     
     @staticmethod
     def update_saving_plan_status(saving_plan):
-        """
-        Update the status of a saving plan based on current conditions
-        """
+        
+        #Update the status of a saving plan based on current conditions
+     
         from datetime import date
         today = date.today()
         
@@ -104,9 +106,9 @@ class SavingPlanService:
     
     @staticmethod
     def renew_saving_plan(saving_plan, new_amount):
-        """
-        Renew a saving plan with a new amount
-        """
+      
+        #Renew a saving plan with a new amount
+       
         from datetime import date
         today = date.today()
         
@@ -131,15 +133,15 @@ class SavingPlanService:
 
 
 class BudgetService:
-    """
-    Service class for handling budget-related business logic
-    """
+   
+    #Service class for handling budget-related business logic
+  
     
     @staticmethod
     def check_general_budget_exists(user):
-        """
-        Check if user already has a general budget
-        """
+       
+        #Check if user already has a general budget
+       
         try:
             budget = GeneralSpendingLimit.objects.get(user=user)
             return True, f'User already has a {budget.budget_plan} General Budget'
@@ -148,9 +150,9 @@ class BudgetService:
     
     @staticmethod
     def check_category_budget_exists(category_id, user):
-        """
-        Check if a category already has a budget
-        """
+       
+        #Check if a category already has a budget
+       
         try:
             category_budget = CategorySpendingLimit.objects.get(
                 category_id=category_id, 
@@ -163,9 +165,9 @@ class BudgetService:
     
     @staticmethod
     def get_general_limit_status(user):
-        """
-        Get the general spending limit status for a user
-        """
+        
+        #Get the general spending limit status for a user
+        
         from datetime import datetime, timedelta, date
         from Tracker.models import Transaction
         
@@ -229,9 +231,9 @@ class BudgetService:
 
 
 class SavingsService:
-    """
-    Service class for handling savings-related business logic
-    """
+    
+    # Service class for handling savings-related business logic
+    
     
     @staticmethod
     def process_savings_from_income(transaction):

@@ -79,7 +79,6 @@ class Transaction(models.Model):
     amount = models.PositiveIntegerField()
     type = models.CharField(choices=Type,max_length=50, blank=True)
     category= models.ForeignKey(Category, on_delete=models.CASCADE,null=True,blank=True)
-    # sub_category = models.ForeignKey(SubCategory, on_delete=models.CASCADE,null=True,blank=True)
     notes = models.TextField(max_length=500,blank=True,null=True)
     receipt = models.FileField(blank=True,null=True)
     date = models.DateTimeField(auto_now_add=True)
@@ -96,6 +95,7 @@ class Transaction(models.Model):
 class RecurringTransaction(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     frequency = models.CharField(max_length=20, choices=[('Daily', 'Daily'), ('Weekly', 'Weekly'), ('Monthly', 'Monthly'), ('Yearly', 'Yearly')])
     next_due_date = models.DateField()
