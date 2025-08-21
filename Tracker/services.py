@@ -232,7 +232,7 @@ class BudgetService:
 
 class SavingsService:
     
-    # Service class for handling savings-related business logic
+    # Service class for handling savings-related business logics
     
     
     @staticmethod

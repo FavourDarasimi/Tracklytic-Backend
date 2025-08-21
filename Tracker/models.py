@@ -4,8 +4,8 @@ from django.db import models
 user = get_user_model()
 
 Type = (
-    ("Debit","Debit"),
-    ("Credit","Credit"),
+    ("Expense","Expense"),
+    ("Income","Income"),
 )
 
 Plan = (
@@ -75,12 +75,12 @@ class SavingPlan(models.Model):
 
 class Transaction(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE)
-    party_name = models.CharField(max_length=200)
-    amount = models.PositiveIntegerField()
-    type = models.CharField(choices=Type,max_length=50, blank=True)
+    party_name = models.CharField(max_length=200,null=True,blank=True)
+    amount = models.PositiveIntegerField(null=True,blank=True)
+    type = models.CharField(choices=Type,max_length=50,null=True,blank=True)
     category= models.ForeignKey(Category, on_delete=models.CASCADE,null=True,blank=True)
     notes = models.TextField(max_length=500,blank=True,null=True)
-    receipt = models.FileField(blank=True,null=True)
+    receipt = models.FileField(upload_to="receipts/",blank=True,null=True)
     date = models.DateTimeField(auto_now_add=True)
     add_savings = models.BooleanField(default=False)
     savings_percentage = models.PositiveIntegerField(null=True,blank=True)

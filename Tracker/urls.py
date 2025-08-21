@@ -2,7 +2,7 @@ from django.urls import path, include
 from .views import AddTransacion, AddCategory,  GetUserCategories, \
     AddGeneralSpendingLimit, \
     AddCategorySpendingLimit, EditGeneralSpendingLimit, EditCategorySpendingLimit, AddSavingPlan, \
-    CheckStatusOfUserSavingPlans, RenewSavingGoal, UserSavingPlan
+    CheckStatusOfUserSavingPlans, RenewSavingGoal, UserSavingPlan,UploadReceipt
 
 urlpatterns = [
     path('add/category/',AddCategory.as_view()),
@@ -17,5 +17,6 @@ urlpatterns = [
     path('add/saving/plan/',AddSavingPlan.as_view()),
     path('check/saving/plan/status/',CheckStatusOfUserSavingPlans.as_view()),
     path('renew/saving/plan/<int:pk>',RenewSavingGoal.as_view()),
-    path('user/saving/plan/',UserSavingPlan.as_view())
+    path('user/saving/plan/',UserSavingPlan.as_view()),
+    path('transaction/upload/receipt/',UploadReceipt.as_view())
 ]

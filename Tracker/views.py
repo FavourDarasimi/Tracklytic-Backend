@@ -1,6 +1,5 @@
 from datetime import date
 from tkinter import N
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -10,9 +9,9 @@ from unicodedata import category
 from Tracker.models import Category, GeneralSpendingLimit, CategorySpendingLimit, RecurringTransaction, Transaction, SavingPlan
 from Tracker.serializers import RecurringTransactionSerializer, TransactionSerializer, CategorySerializer, \
     GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer
-from .utils import create_success_response, create_error_response, create_transaction_response, validate_category_exists
+from .utils import assign_party_name, create_success_response, create_error_response, create_transaction_response, detect_transaction_type, extract_transaction_data, validate_category_exists
 from .services import TransactionService, SavingPlanService, BudgetService, SavingsService
-
+import tempfile, os
 
 class AddCategory(APIView):
     def post(self, request:Request):
@@ -236,6 +235,63 @@ class UserSavingPlan(APIView):
         return create_success_response('Saving plans retrieved successfully', serializer.data)
 
 
-        
+
+class UploadReceipt(APIView):
+    def post(self, request):
+        receipt = request.FILES.get("receipt")
+
+        if not receipt:
+            return Response({"error": "No receipt uploaded"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Save to a temp file for OCR
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(receipt.name)[-1])
+        for chunk in receipt.chunks():
+            temp_file.write(chunk)
+        temp_file.close()
+
+        # Run OCR on the temp file
+        extracted_data = extract_transaction_data(temp_file.name)
+
+        # Detect type and assign party name
+        transaction_type = detect_transaction_type(
+            extracted_data.get("notes"), 
+            user_name=request.user.username
+        )
+
+        party_name = assign_party_name(
+            transaction_type,
+            sender=extracted_data.get("sender"),
+            receiver=extracted_data.get("receiver")
+        )
+
+        # Clean up temp file
+        os.remove(temp_file.name)
+
+        if not extracted_data:
+            return Response({"error": "No transaction data found in receipt"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Build transaction data (including user + file)
+        data = {
+            "user": request.user.id,
+            "party_name": party_name,
+            "amount": extracted_data.get("amount"),
+            "type": transaction_type,
+            "date": extracted_data.get("date"),
+            "receipt": receipt
+        }
+
+        # Use serializer to validate & save
+        serializer = TransactionSerializer(data=data)
+        if serializer.is_valid():
+            serializer.validated_data['user'] = request.user
+            transaction = serializer.save()
+            return Response({
+                "status": "success",
+                "message": "Transaction data extracted successfully",
+                "data": serializer.data
+            }, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # Create your views here.
