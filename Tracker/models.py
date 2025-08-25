@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
 user = get_user_model()
 
@@ -81,12 +82,15 @@ class Transaction(models.Model):
     category= models.ForeignKey(Category, on_delete=models.CASCADE,null=True,blank=True)
     notes = models.TextField(max_length=500,blank=True,null=True)
     receipt = models.FileField(upload_to="receipts/",blank=True,null=True)
-    date = models.DateTimeField(auto_now_add=True)
+    transaction_date = models.DateTimeField(null=True, blank=True,default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     add_savings = models.BooleanField(default=False)
     savings_percentage = models.PositiveIntegerField(null=True,blank=True)
     savings = models.ForeignKey(SavingPlan,on_delete=models.CASCADE,null=True,blank=True)
     savings_note = models.TextField(max_length=500,blank=True,null=True)
     recurring = models.BooleanField(default=False)
+
+    
 
     def __str__(self):
         return f'{self.user.username} - {self.type} - {self.party_name}'

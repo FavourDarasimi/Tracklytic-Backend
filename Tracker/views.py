@@ -6,6 +6,7 @@ from rest_framework.request import Request
 from django.shortcuts import render
 from rest_framework.views import APIView
 from unicodedata import category
+from Tracker.ai_client import generate_spending_advice
 from Tracker.models import Category, GeneralSpendingLimit, CategorySpendingLimit, RecurringTransaction, Transaction, SavingPlan
 from Tracker.serializers import RecurringTransactionSerializer, TransactionSerializer, CategorySerializer, \
     GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer
@@ -292,6 +293,26 @@ class UploadReceipt(APIView):
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AiClient(APIView):
+    def get(self, request:Request):
+        user = request.user
+
+    # Fetch recent data
+        transactions = Transaction.objects.filter(user=user).order_by("-transaction_date")[:20]  # last 20 transactions
+        general_limit = GeneralSpendingLimit.objects.filter(user=user).first()
+        category_limits = CategorySpendingLimit.objects.filter(user=user)
+        saving_plans = SavingPlan.objects.filter(user=user)
+
+        limits = {
+            "general": general_limit,
+            "categories": category_limits
+        }
+
+        advice = generate_spending_advice(user, transactions, limits, saving_plans)
+        return create_success_response('Ai Insights', advice)
+    
 
 
 # Create your views here.

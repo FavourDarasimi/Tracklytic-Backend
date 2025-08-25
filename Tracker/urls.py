@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import AddTransacion, AddCategory,  GetUserCategories, \
+from .views import AddTransacion, AddCategory, AiClient,  GetUserCategories, \
     AddGeneralSpendingLimit, \
     AddCategorySpendingLimit, EditGeneralSpendingLimit, EditCategorySpendingLimit, AddSavingPlan, \
     CheckStatusOfUserSavingPlans, RenewSavingGoal, UserSavingPlan,UploadReceipt
@@ -18,5 +18,7 @@ urlpatterns = [
     path('check/saving/plan/status/',CheckStatusOfUserSavingPlans.as_view()),
     path('renew/saving/plan/<int:pk>',RenewSavingGoal.as_view()),
     path('user/saving/plan/',UserSavingPlan.as_view()),
-    path('transaction/upload/receipt/',UploadReceipt.as_view())
+    path('transaction/upload/receipt/',UploadReceipt.as_view()),
+
+    path('ai/insights/',AiClient.as_view()),
 ]

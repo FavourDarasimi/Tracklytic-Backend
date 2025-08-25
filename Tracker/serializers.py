@@ -36,7 +36,7 @@ class TransactionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Transaction
-        fields = ['id','user','party_name','amount','type','category','notes','date','add_savings','savings_percentage','savings','savings_note','recurring']
+        fields = ['id','user','party_name','amount','type','category','notes','receipt','transaction_date','created_at','add_savings','savings_percentage','savings','savings_note','recurring']
 
     def get_user(self,obj):
         user = obj.user.username
