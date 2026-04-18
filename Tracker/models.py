@@ -89,6 +89,7 @@ class Transaction(models.Model):
     savings = models.ForeignKey(SavingPlan,on_delete=models.CASCADE,null=True,blank=True)
     savings_note = models.TextField(max_length=500,blank=True,null=True)
     recurring = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
     
 

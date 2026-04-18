@@ -24,7 +24,7 @@ class TransactionService:
         saving = None
         if savings_id:
             saving, saving_error = validate_saving_plan_exists(savings_id, user)
-            if saving_error:
+            if saving_error:  
                 return None, saving_error
             
         return {

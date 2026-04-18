@@ -18,7 +18,7 @@ def create_success_response(message, data=None, status_code=status.HTTP_200_OK):
     return Response(data=response, status=status_code)
 
 
-def create_error_response(message, status_code=status.HTTP_200_OK):
+def create_error_response(message, status_code=status.HTTP_400_BAD_REQUEST):
     """
     Utility function to create standardized error responses
     """

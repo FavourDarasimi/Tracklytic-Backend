@@ -42,6 +42,16 @@ class TransactionSerializer(serializers.ModelSerializer):
         user = obj.user.username
         return user
 
+class ListTransactionSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = Transaction
+        fields = ['id','user','party_name','amount','type','category','notes','receipt','transaction_date','created_at']     
+
+    def get_user(self,obj):
+        user = obj.user.username
+        return user       
+
 class GeneralSpendingLimitSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     class Meta:

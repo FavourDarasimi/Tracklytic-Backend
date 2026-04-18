@@ -5,11 +5,12 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from unicodedata import category
 from Tracker.ai_client import generate_spending_advice
 from Tracker.models import Category, GeneralSpendingLimit, CategorySpendingLimit, RecurringTransaction, Transaction, SavingPlan
 from Tracker.serializers import RecurringTransactionSerializer, TransactionSerializer, CategorySerializer, \
-    GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer
+    GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer,ListTransactionSerializer
 from .utils import assign_party_name, create_success_response, create_error_response, create_transaction_response, detect_transaction_type, extract_transaction_data, validate_category_exists
 from .services import TransactionService, SavingPlanService, BudgetService, SavingsService
 import tempfile, os
@@ -108,6 +109,14 @@ class AddTransacion(APIView):
             return create_transaction_response(serializer.data, limit_message, savings_message,recurring_message)
             
         return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ListTransactionsView(ListAPIView):
+    serializer_class = ListTransactionSerializer
+
+    def get_queryset(self):
+        transaction = Transaction.object.filter(user=self.request.user,is_deleted=False)
+        return transaction             
 
 
 class AddRecurringTransaction(APIView):
