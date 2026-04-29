@@ -1,11 +1,42 @@
+import os
+import tempfile
+
 from Tracker.models import SavingPlan, Category, CategorySpendingLimit, GeneralSpendingLimit,RecurringTransaction
-from .utils import validate_category_exists, validate_saving_plan_exists
+from .utils import extract_transaction_data, validate_category_exists, validate_saving_plan_exists
 
 
 class TransactionService:
     
     # Service class for handling transaction-related business logic
     
+    
+    @staticmethod
+    def parse_receipt_if_uploaded(request):
+        """
+        If a receipt file is in the request, run Gemini extraction
+        and merge the extracted fields into request.data.
+        Returns (merged_data, error)
+        """
+        receipt = request.FILES.get("receipt")
+        if not receipt:
+            return request.data, None  # no receipt, proceed normally
+
+        suffix = os.path.splitext(receipt.name)[1]
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+            for chunk in receipt.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        try:
+            extracted = extract_transaction_data(tmp_path)
+        except Exception as e:
+            return None, f"Receipt parsing failed: {str(e)}"
+        finally:
+            os.unlink(tmp_path)
+
+        # Merge: extracted fields are defaults, existing request.data takes priority
+        merged = {**extracted, **request.data}
+        return merged, None
     
     @staticmethod
     def process_transaction_data(data, user):
