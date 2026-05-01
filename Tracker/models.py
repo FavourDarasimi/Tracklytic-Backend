@@ -30,9 +30,24 @@ class Category(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=100,choices=Category_Type)
     tag = models.CharField(max_length=100,null=True,blank=True)
+    
     def __str__(self):
         return self.name
+    
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','type']
+            )
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user','name'],
+                name='unique_user_category_name'
+            )
+        ]
 
+    
 
 
 # class SubCategory(models.Model):
@@ -46,12 +61,19 @@ class Category(models.Model):
 
 
 class GeneralSpendingLimit(models.Model):
-    user = models.OneToOneField(user, on_delete=models.CASCADE,null=True,blank=True)
+    user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
     budget_plan = models.CharField(choices=Plan,max_length=100,blank=True)
     budget_amount = models.PositiveIntegerField()
 
     def __str__(self):
         return self.user.username
+    
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','budget_plan']
+            )
+        ]
 
 class CategorySpendingLimit(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
@@ -61,7 +83,22 @@ class CategorySpendingLimit(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.category}'
-#day2
+ 
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','category']
+            ),
+            models.Index(
+                fields=['user','budget_plan']
+            )
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user','category','budget_plan'],
+                name='unique_user_category_spending_limit'
+            )
+        ]
 
 class SavingPlan(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
@@ -72,6 +109,18 @@ class SavingPlan(models.Model):
     deadline = models.DateField(null=True,blank=True)
     status = models.CharField(choices=Saving_Plan_Status,max_length=100,null=True,blank=True)
 
+    def __str__(self):
+        return f'{self.user.username} {self.name} savings'
+    
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','status']
+            ),
+            models.Index(
+                fields=['deadline']
+            )
+        ]
 
 
 class Transaction(models.Model):
@@ -96,6 +145,19 @@ class Transaction(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.type} - {self.party_name}'
     
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','transaction_date']
+            ),
+            models.Index(
+                fields=['user','category']
+            ),
+            models.Index(
+                fields=['is_deleted']
+            )
+        ]
+    
 
 class RecurringTransaction(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE)
@@ -106,4 +168,17 @@ class RecurringTransaction(models.Model):
     next_due_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     active = models.BooleanField(default=True)
+    
+
+    
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=['user','active']
+            ),
+            models.Index(
+                fields=['next_due_date']
+            )
+        ]
+    
 # Create your models here.
