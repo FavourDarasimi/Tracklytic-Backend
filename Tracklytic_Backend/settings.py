@@ -148,7 +148,8 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
     'SEND_ACTIVATION_EMAIL': True,  # Set to True if email is configured
-    'ACTIVATION_URL': 'auth/activate/{uid}/{token}',
+    'DOMAIN':'http://localhost:5173',
+    'ACTIVATION_URL': 'verify-email/{uid}/{token}',
     'PASSWORD_RESET_CONFIRM_URL': 'auth/password/reset/confirm/{uid}/{token}',
     'PASSWORD_RESET_CONFIRM_RETYPE': True,  # Require password confirmation
     'SEND_CONFIRMATION_EMAIL': True,
@@ -173,20 +174,22 @@ SIMPLE_JWT = {
 }
 
 # Email settings (console backend for testing)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # Use an App Password for Gmail
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 465
+# EMAIL_USE_SSL = True
+# EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # Use an App Password for Gmail
+# DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 AUTH_USER_MODEL= "Account.CustomUser"
 
 MONO_PUBLIC_KEY = os.getenv('MONO_PUBLIC_KEY')
 MONO_SECRET_KEY = os.getenv('MONO_SECRET_KEY')
 
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [ 'http://localhost:5173', 'http://localhost:8000']
 CORS_ALLOW_CREDENTIALS = True
 
 MEDIA_URL = '/media/'
