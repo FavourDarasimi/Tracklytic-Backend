@@ -148,9 +148,10 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
     'SEND_ACTIVATION_EMAIL': True,  # Set to True if email is configured
-    'DOMAIN':'http://localhost:5173',
-    'ACTIVATION_URL': 'verify-email/{uid}/{token}',
-    'PASSWORD_RESET_CONFIRM_URL': 'auth/password/reset/confirm/{uid}/{token}',
+    'DOMAIN': 'localhost:5173',
+    'PROTOCOL': 'http',
+    'ACTIVATION_URL': 'verify-email?uid={uid}&token={token}',
+    'PASSWORD_RESET_CONFIRM_URL': 'reset-password-confirm?uid={uid}&token={token}',
     'PASSWORD_RESET_CONFIRM_RETYPE': True,  # Require password confirmation
     'SEND_CONFIRMATION_EMAIL': True,
     'SERIALIZERS': {
@@ -158,9 +159,12 @@ DJOSER = {
         'user': 'Account.serializers.CustomUserSerializer',
         'current_user': 'Account.serializers.CustomUserSerializer',
     },
-
-
 }
+
+DOMAIN = 'localhost:5173'
+SITE_NAME = 'Tracklytic'
+
+EMAIL_CHARSET = 'utf-8'
 
 # Simple JWT settings
 SIMPLE_JWT = {
