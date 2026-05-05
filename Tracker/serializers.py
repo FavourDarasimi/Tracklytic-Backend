@@ -52,6 +52,52 @@ class ListTransactionSerializer(serializers.ModelSerializer):
         user = obj.user.username
         return user       
 
+class DashboardTransactionSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField(read_only=True)
+    category = serializers.SerializerMethodField(read_only=True)
+    savings = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'id',
+            'user',
+            'party_name',
+            'amount',
+            'type',
+            'category',
+            'notes',
+            'receipt',
+            'transaction_date',
+            'created_at',
+            'add_savings',
+            'savings_percentage',
+            'savings',
+            'savings_note',
+            'recurring',
+        ]
+
+    def get_user(self,obj):
+        return obj.user.username
+
+    def get_category(self,obj):
+        if obj.category is None:
+            return None
+        return {
+            'id': obj.category.id,
+            'name': obj.category.name,
+            'type': obj.category.type,
+        }
+
+    def get_savings(self,obj):
+        if obj.savings is None:
+            return None
+        return {
+            'id': obj.savings.id,
+            'name': obj.savings.name,
+            'status': obj.savings.status,
+        }
+
 class GeneralSpendingLimitSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     class Meta:

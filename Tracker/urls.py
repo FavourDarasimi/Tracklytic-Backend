@@ -20,6 +20,6 @@ urlpatterns = [
     path('renew/saving/plan/<int:pk>',RenewSavingGoal.as_view()),
     path('user/saving/plan/',UserSavingPlan.as_view()),
     path('transaction/upload/receipt/',ParseReceiptView.as_view()),
-
+    path('dashboard/overview/', views.DashboardOverview.as_view()),
     path('ai/insights/',AiClient.as_view()),
 ]

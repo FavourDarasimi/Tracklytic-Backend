@@ -1,16 +1,17 @@
-from datetime import date
+from datetime import date, datetime, timedelta
 from tkinter import N
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
 from django.shortcuts import render
+from django.db.models import Sum
 from rest_framework.views import APIView, csrf_exempt
 from rest_framework.generics import ListAPIView
 from unicodedata import category
 from Tracker.ai_client import generate_spending_advice
 from Tracker.models import Category, GeneralSpendingLimit, CategorySpendingLimit, RecurringTransaction, Transaction, SavingPlan
 from Tracker.serializers import RecurringTransactionSerializer, TransactionSerializer, CategorySerializer, \
-    GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer,ListTransactionSerializer
+    GeneralSpendingLimitSerializer, CategorySpendingLimitSerializer, SavingPlanSerializer,ListTransactionSerializer, DashboardTransactionSerializer
 from .utils import create_success_response, create_error_response, create_transaction_response,  extract_transaction_data, validate_category_exists
 from .services import TransactionService, SavingPlanService, BudgetService, SavingsService
 import tempfile, os
@@ -37,6 +38,97 @@ class GetUserCategories(APIView):
         else:
             return create_success_response('No categories found for this user')
 
+
+
+class DashboardOverview(APIView):
+    def get(self, request: Request):
+        user = request.user
+        now = datetime.now()
+        today = now.date()
+        week_ago = today - timedelta(days=7)
+
+        transactions = Transaction.objects.filter(user=user, is_deleted=False, transaction_date__isnull=False)
+        monthly_transactions = transactions.filter(
+            transaction_date__year=now.year,
+            transaction_date__month=now.month,
+        )
+
+        monthly_income = monthly_transactions.filter(type='Income').aggregate(total=Sum('amount'))['total'] or 0
+        monthly_expenses = monthly_transactions.filter(type='Expense').aggregate(total=Sum('amount'))['total'] or 0
+        daily_average = round(monthly_expenses / max(1, today.day), 2)
+
+        expense_qs = monthly_transactions.filter(type='Expense', category__isnull=False)
+        category_totals = (
+            expense_qs
+            .values('category__name')
+            .annotate(total=Sum('amount'))
+            .order_by('-total')
+        )
+        expense_distribution = [
+            {'name': item['category__name'], 'amount': item['total']}
+            for item in category_totals
+        ]
+        top_category = expense_distribution[0]['name'] if expense_distribution else None
+
+        chart_labels = []
+        chart_values = []
+        for offset in range(6, -1, -1):
+            label_date = today - timedelta(days=offset)
+            chart_labels.append(label_date.strftime('%b %d'))
+            chart_values.append(
+                expense_qs.filter(transaction_date__date=label_date).aggregate(total=Sum('amount'))['total'] or 0
+            )
+
+        latest_transactions = Transaction.objects.filter(
+            user=user,
+            is_deleted=False,
+            transaction_date__isnull=False,
+        ).order_by('-transaction_date')[:5]
+        latest_transactions_serializer = DashboardTransactionSerializer(latest_transactions, many=True)
+
+        general_limit = GeneralSpendingLimit.objects.filter(user=user).first()
+        budget_summary = None
+        if general_limit is not None:
+            budget_summary = {
+                'plan': general_limit.budget_plan,
+                'limit': general_limit.budget_amount,
+                'spent': monthly_expenses,
+                'remaining': max(general_limit.budget_amount - monthly_expenses, 0),
+            }
+
+        weekly_transactions = transactions.filter(transaction_date__date__gte=week_ago).count()
+
+        categories = Category.objects.filter(user=user)
+        categories_serializer = CategorySerializer(categories, many=True)
+
+        saving_plans = SavingPlan.objects.filter(user=user)
+        limits = {
+            'general': general_limit,
+            'categories': CategorySpendingLimit.objects.filter(user=user),
+        }
+        insights = generate_spending_advice(user, transactions.order_by('-transaction_date')[:20], limits, saving_plans)
+
+        data = {
+            'categories': categories_serializer.data,
+            'insights': insights,
+            'overview': {
+                'monthly_income': monthly_income,
+                'monthly_expenses': monthly_expenses,
+                'daily_average': daily_average,
+                'top_category': top_category,
+                'total_transactions': transactions.count(),
+                'weekly_transactions': weekly_transactions,
+                'budget': budget_summary,
+                'expense_distribution': expense_distribution,
+                'expense_chart': {
+                    'labels': chart_labels,
+                    'values': chart_values,
+                },
+            },
+            'latest_transactions': latest_transactions_serializer.data,
+        }
+
+        return create_success_response('Dashboard data retrieved successfully', data)
 
 
 class AddTransacion(APIView):

@@ -130,7 +130,7 @@ def extract_transaction_data(file_path):
   
 
        # Try models in order, fall back if one is unavailable
-    models_to_try = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-3-flash-preview","gemini-2.5-flash-lite","gemini-2.0-flash-lite"]
+    models_to_try = ["gemini-3-flash-preview"]
     last_error = None
 
     for model_name in models_to_try:

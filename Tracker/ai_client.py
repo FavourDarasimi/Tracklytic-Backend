@@ -1,11 +1,90 @@
 from google import genai
 from dotenv import load_dotenv
 import os
+import time
+import json
 
 load_dotenv()
 
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
+def extract_json_array(response):
+    try:
+        parts = response.candidates[0].content.parts
+        text = " ".join([p.text for p in parts if hasattr(p, "text")]).strip()
+
+        # محاولة تحويل إلى JSON
+        data = json.loads(text)
+
+        if isinstance(data, list):
+            return data
+
+        return None
+
+    except Exception as e:
+        print(f"[PARSE ERROR] {e}")
+        return None
+
+def generate_fallback_insights(transactions, limits, saving_plans):
+    insights = []
+
+    if not transactions:
+        return [{
+            "type": "info",
+            "title": "No Data",
+            "message": "No transactions yet. Start tracking to get insights."
+        }]
+
+    total_expense = sum(t.amount for t in transactions if t.type == "expense")
+    total_income = sum(t.amount for t in transactions if t.type == "income")
+
+    balance = total_income - total_expense
+
+    if balance < 0:
+        insights.append({
+            "type": "warning",
+            "title": "Overspending",
+            "message": "You are spending more than you earn."
+        })
+    else:
+        insights.append({
+            "type": "success",
+            "title": "Positive Balance",
+            "message": "You have a positive balance."
+        })
+
+    # Top category
+    category_totals = {}
+    for t in transactions:
+        if t.type == "expense" and t.category:
+            category_totals[t.category.name] = category_totals.get(t.category.name, 0) + t.amount
+
+    if category_totals:
+        top_category = max(category_totals, key=category_totals.get)
+        insights.append({
+            "type": "info",
+            "title": "Top Spending",
+            "message": f"Your highest spending category is {top_category}."
+        })
+
+    # Savings hint
+    if saving_plans:
+        insights.append({
+            "type": "info",
+            "title": "Savings",
+            "message": "Consider allocating more funds toward your savings goals."
+        })
+
+    insights.append({
+        "type": "info",
+        "title": "Habit",
+        "message": "Track daily spending to improve financial habits."
+    })
+
+    return {
+        "source": "fallback",
+        "insights": insights
+    }
 def generate_spending_advice(user, transactions, limits, saving_plans):
     """
     user: User object
@@ -35,40 +114,83 @@ def generate_spending_advice(user, transactions, limits, saving_plans):
     )
 
     prompt = f"""
-    You are a financial advisor AI.
+        You are a financial advisor AI.
 
-    User: {user.username}
-    Recent Transactions:
-    {tx_summary}
+        Analyze the user's financial data and return structured insights.
 
-    Spending Limits:
-    {limit_summary if limit_summary else 'No limits set'}
+        User: {user.username}
 
-    Saving Plans:
-    {saving_summary if saving_summary else 'No saving plans set'}
+        Recent Transactions:
+        {tx_summary}
 
-    Task:
-    1. Summarize their spending behavior.
-    2. Highlight any overspending or risky categories.
-    3. Suggest at least 3 personalized tips to improve money management.
-    4. If possible, suggest how they can reach their saving goals faster.
-    5. Keep advice clear and encouraging.
-    """
+        Budget / Spending Limits:
+        {limit_summary if limit_summary else 'No budget limits set'}
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=prompt
-    )
+        Saving Plans:
+        {saving_summary if saving_summary else 'No saving plans set'}
 
-    return response.text
+        Your task:
+        - Analyze income, spending, and budget
+        - Identify financial health
+        - Provide actionable advice
 
+        IMPORTANT:
+        - Return ONLY valid JSON
+        - Do NOT include explanations, markdown, or extra text
+        - Output must be a JSON array of objects
 
-# from dotenv import load_dotenv
-# import os
-# import google.generativeai as genai
+        Each object must follow this format:
+        {{
+        "type": "info" | "warning" | "success",
+        "title": "Short title",
+        "message": "Clear 1–2 sentence insight"
+        }}
 
-# load_dotenv()
-# genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+        Rules:
+        - Use "warning" for overspending or risky behavior
+        - Use "success" for positive financial habits
+        - Use "info" for general observations or tips
+        - Return 4–6 insights
 
-# for model in genai.list_models():
-#     print(model.name)
+        Example:
+        [
+        {{
+            "type": "warning",
+            "title": "Overspending",
+            "message": "You are spending more than you earn this month."
+        }},
+        {{
+            "type": "info",
+            "title": "Top Category",
+            "message": "Your highest spending category is Food."
+        }}
+        ]
+        """
+
+    models_to_try = [
+        "gemini-3-flash-preview",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash"
+    ]
+
+    MAX_RETRIES = 2
+    last_error = None
+
+    for model_name in models_to_try:
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                )
+                text = extract_json_array(response)
+                if text:
+                    return text
+
+            except Exception as e:
+                last_error = str(e)
+                print(f"[WARNING] {model_name} attempt {attempt+1} failed: {e}")
+                time.sleep(1.5 * (attempt + 1))
+
+    print(f"[FALLBACK TRIGGERED] {last_error}")
+    return generate_fallback_insights(transactions, limits, saving_plans)
