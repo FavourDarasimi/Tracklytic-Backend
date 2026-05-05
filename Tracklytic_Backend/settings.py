@@ -156,6 +156,7 @@ DJOSER = {
     'SEND_CONFIRMATION_EMAIL': True,
     'SERIALIZERS': {
         'user_create': 'Account.serializers.CustomUserCreateSerializer',
+        'user_create_password_retype': 'Account.serializers.CustomUserCreateSerializer',
         'user': 'Account.serializers.CustomUserSerializer',
         'current_user': 'Account.serializers.CustomUserSerializer',
     },
@@ -165,6 +166,8 @@ DOMAIN = 'localhost:5173'
 SITE_NAME = 'Tracklytic'
 
 EMAIL_CHARSET = 'utf-8'
+
+AUTH_USER_MODEL='Account.CustomUser'
 
 # Simple JWT settings
 SIMPLE_JWT = {
@@ -188,7 +191,7 @@ SIMPLE_JWT = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
-AUTH_USER_MODEL= "Account.CustomUser"
+
 
 MONO_PUBLIC_KEY = os.getenv('MONO_PUBLIC_KEY')
 MONO_SECRET_KEY = os.getenv('MONO_SECRET_KEY')
