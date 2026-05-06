@@ -35,8 +35,8 @@ def generate_fallback_insights(transactions, limits, saving_plans):
             "message": "No transactions yet. Start tracking to get insights."
         }]
 
-    total_expense = sum(t.amount for t in transactions if t.type == "expense")
-    total_income = sum(t.amount for t in transactions if t.type == "income")
+    total_expense = sum(t.amount for t in transactions if t.type == "Expense")
+    total_income = sum(t.amount for t in transactions if t.type == "Income")
 
     balance = total_income - total_expense
 
@@ -56,7 +56,7 @@ def generate_fallback_insights(transactions, limits, saving_plans):
     # Top category
     category_totals = {}
     for t in transactions:
-        if t.type == "expense" and t.category:
+        if t.type == "Expense" and t.category:
             category_totals[t.category.name] = category_totals.get(t.category.name, 0) + t.amount
 
     if category_totals:
@@ -81,10 +81,9 @@ def generate_fallback_insights(transactions, limits, saving_plans):
         "message": "Track daily spending to improve financial habits."
     })
 
-    return {
-        "source": "fallback",
-        "insights": insights
-    }
+    return insights
+
+
 def generate_spending_advice(user, transactions, limits, saving_plans):
     """
     user: User object
