@@ -43,13 +43,26 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 class ListTransactionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
+    category = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Transaction
-        fields = ['id','user','party_name','amount','type','category','notes','receipt','transaction_date','created_at']     
+        fields = ['id', 'user', 'party_name', 'amount', 'type', 'category', 'notes', 'receipt', 'transaction_date', 'created_at']
 
-    def get_user(self,obj):
-        user = obj.user.username
-        return user       
+    def get_user(self, obj):
+        return obj.user.username
+
+    def get_category(self, obj):
+        if obj.category is None:
+            return None
+        return {
+            'id': obj.category.id,
+            'name': obj.category.name,
+            'type': obj.category.type,
+            'is_system': obj.category.is_system,
+            'icon': obj.category.icon,
+            'color': obj.category.color,
+        }
 
 class DashboardTransactionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)

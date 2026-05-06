@@ -194,8 +194,11 @@ class ListTransactionsView(ListAPIView):
     serializer_class = ListTransactionSerializer
 
     def get_queryset(self):
-        transaction = Transaction.object.filter(user=self.request.user,is_deleted=False)
-        return transaction             
+        return (
+            Transaction.objects.filter(user=self.request.user, is_deleted=False)
+            .select_related('category')
+            .order_by('-transaction_date')
+        )
 
 
 class AddRecurringTransaction(APIView):
