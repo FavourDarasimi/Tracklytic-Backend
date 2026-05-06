@@ -188,8 +188,6 @@ def generate_spending_advice(user, transactions, limits, saving_plans):
 
             except Exception as e:
                 last_error = str(e)
-                print(f"[WARNING] {model_name} attempt {attempt+1} failed: {e}")
                 time.sleep(1.5 * (attempt + 1))
 
-    print(f"[FALLBACK TRIGGERED] {last_error}")
     return generate_fallback_insights(transactions, limits, saving_plans)

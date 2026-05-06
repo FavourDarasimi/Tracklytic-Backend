@@ -54,6 +54,8 @@ def validate_category_exists(category_id, user):
     or is a shared system category.
     """
     from Tracker.models import Category
+    if not category_id:  # Allow empty category_id
+        return None, None
     try:
         category = Category.objects.get(
             Q(id=category_id),
@@ -135,7 +137,11 @@ def extract_transaction_data(file_path):
   
 
        # Try models in order, fall back if one is unavailable
-    models_to_try = ["gemini-3-flash-preview"]
+    models_to_try = [
+        "gemini-3-flash-preview",
+        "gemini-2.5-flash",
+        "gemini-1.5-flash"
+    ]
     last_error = None
 
     for model_name in models_to_try:

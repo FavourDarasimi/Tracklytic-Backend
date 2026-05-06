@@ -113,11 +113,11 @@ class DashboardOverview(APIView):
             'general': general_limit,
             'categories': CategorySpendingLimit.objects.filter(user=user),
         }
-        insights = generate_spending_advice(user, transactions.order_by('-transaction_date')[:20], limits, saving_plans)
+        # insights = generate_spending_advice(user, transactions.order_by('-transaction_date')[:20], limits, saving_plans)
 
         data = {
             'categories': categories_serializer.data,
-            'insights': insights,
+            # 'insights': insights,
             'overview': {
                 'monthly_income': monthly_income,
                 'monthly_expenses': monthly_expenses,
