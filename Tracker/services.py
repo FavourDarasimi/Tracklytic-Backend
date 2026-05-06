@@ -1,7 +1,8 @@
 import os
 import tempfile
 
-from Tracker.models import SavingPlan, Category, CategorySpendingLimit, GeneralSpendingLimit,RecurringTransaction
+from django.db.models import Q
+from Tracker.models import SavingPlan, Category, CategorySpendingLimit, GeneralSpendingLimit, RecurringTransaction
 from .utils import extract_transaction_data, validate_category_exists, validate_saving_plan_exists
 
 
@@ -186,10 +187,13 @@ class BudgetService:
        
         try:
             category_budget = CategorySpendingLimit.objects.get(
-                category_id=category_id, 
+                category_id=category_id,
                 user=user
             )
-            category = Category.objects.get(id=category_id, user=user)
+            category = Category.objects.get(
+                Q(id=category_id),
+                Q(user=user) | Q(user__isnull=True, is_system=True)
+            )
             return True, f'{category.name} Category already has a budget'
         except CategorySpendingLimit.DoesNotExist:
             return False, None

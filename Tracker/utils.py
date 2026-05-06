@@ -4,6 +4,7 @@ import json
 import base64
 import re
 from pathlib import Path
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
 import re
@@ -50,10 +51,14 @@ def create_transaction_response(serializer_data, limit_message, savings_message,
 def validate_category_exists(category_id, user):
     """
     Utility function to validate if a category exists for a user
+    or is a shared system category.
     """
     from Tracker.models import Category
     try:
-        category = Category.objects.get(id=category_id, user=user)
+        category = Category.objects.get(
+            Q(id=category_id),
+            Q(user=user) | Q(user__isnull=True, is_system=True)
+        )
         return category, None
     except Category.DoesNotExist:
         return None, 'Category does not exist'

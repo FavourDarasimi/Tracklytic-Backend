@@ -26,10 +26,13 @@ Saving_Plan_Status = (
 )
 
 class Category(models.Model):
-    user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
+    user = models.ForeignKey(user, on_delete=models.CASCADE, null=True, blank=True)
     name = models.CharField(max_length=100)
-    type = models.CharField(max_length=100,choices=Category_Type)
-    tag = models.CharField(max_length=100,null=True,blank=True)
+    type = models.CharField(max_length=100, choices=Category_Type)
+    tag = models.CharField(max_length=100, null=True, blank=True)
+    is_system = models.BooleanField(default=False)
+    icon = models.CharField(max_length=100, null=True, blank=True)
+    color = models.CharField(max_length=20, null=True, blank=True)
     
     def __str__(self):
         return self.name

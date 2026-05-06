@@ -1,13 +1,11 @@
 from datetime import date, datetime, timedelta
-from tkinter import N
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.request import Request
 from django.shortcuts import render
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from rest_framework.views import APIView, csrf_exempt
 from rest_framework.generics import ListAPIView
-from unicodedata import category
 from Tracker.ai_client import generate_spending_advice
 from Tracker.models import Category, GeneralSpendingLimit, CategorySpendingLimit, RecurringTransaction, Transaction, SavingPlan
 from Tracker.serializers import RecurringTransactionSerializer, TransactionSerializer, CategorySerializer, \
@@ -23,6 +21,7 @@ class AddCategory(APIView):
         serializer = CategorySerializer(data=data)
         if serializer.is_valid():
             serializer.validated_data['user'] = request.user
+            serializer.validated_data['is_system'] = False
             serializer.validated_data['tag'] = serializer.validated_data['name'].lower()
             serializer.save()
             return create_success_response('Category Added', serializer.data, status.HTTP_201_CREATED)
@@ -31,7 +30,9 @@ class AddCategory(APIView):
 
 class GetUserCategories(APIView):
     def get(self, request:Request):
-        categories = Category.objects.filter(user=request.user)
+        categories = Category.objects.filter(
+            Q(user=request.user) | Q(user__isnull=True, is_system=True)
+        ).order_by('-is_system', 'name')
         serializer = CategorySerializer(categories,many=True)
         if len(categories) > 0:
             return create_success_response('Categories retrieved successfully', serializer.data)
@@ -47,7 +48,11 @@ class DashboardOverview(APIView):
         today = now.date()
         week_ago = today - timedelta(days=7)
 
-        transactions = Transaction.objects.filter(user=user, is_deleted=False, transaction_date__isnull=False)
+        transactions = Transaction.objects.filter(
+            user=user,
+            is_deleted=False,
+            transaction_date__isnull=False,
+        ).select_related('category')
         monthly_transactions = transactions.filter(
             transaction_date__year=now.year,
             transaction_date__month=now.month,
@@ -98,7 +103,9 @@ class DashboardOverview(APIView):
 
         weekly_transactions = transactions.filter(transaction_date__date__gte=week_ago).count()
 
-        categories = Category.objects.filter(user=user)
+        categories = Category.objects.filter(
+            Q(user=user) | Q(user__isnull=True, is_system=True)
+        ).order_by('-is_system', 'name')
         categories_serializer = CategorySerializer(categories, many=True)
 
         saving_plans = SavingPlan.objects.filter(user=user)

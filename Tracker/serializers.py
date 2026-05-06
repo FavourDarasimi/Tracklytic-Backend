@@ -24,11 +24,10 @@ class CategorySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = Category
-        fields = ['id','user','name','tag']
+        fields = ['id', 'user', 'name', 'tag', 'is_system', 'icon', 'color']
 
-    def get_user(self,obj):
-        user = obj.user.username
-        return user
+    def get_user(self, obj):
+        return obj.user.username if obj.user else None
 
    
 
@@ -87,6 +86,9 @@ class DashboardTransactionSerializer(serializers.ModelSerializer):
             'id': obj.category.id,
             'name': obj.category.name,
             'type': obj.category.type,
+            'is_system': obj.category.is_system,
+            'icon': obj.category.icon,
+            'color': obj.category.color,
         }
 
     def get_savings(self,obj):
