@@ -70,19 +70,19 @@ class TransactionService:
         #Determine the appropriate savings note based on transaction conditions
         
         if (saving.savings_reached_amount >= saving.savings_amount and 
-            transaction_type == 'Credit' and add_savings):
+            transaction_type == 'Income' and add_savings):
             return 'Saving Goal Reached so no amount will be deducted'
         
         elif (saving.savings_reached_amount < saving.savings_amount and 
               saving.status == "Past Deadline" and 
-              transaction_type == 'Credit' and add_savings):
+              transaction_type == 'Income' and add_savings):
             return 'Saving plan is Past the deadline, So no Percentage deducted'
         
-        elif transaction_type == 'Debit' and add_savings == False:
+        elif transaction_type == 'Expense' and add_savings == False:
             return 'You are making an Expense or add savings is False'
         
         else:
-            return f'{savings_percentage}% has been deducted from this Credit Transaction'
+            return f'{savings_percentage}% has been deducted from this Income Transaction'
 
     @staticmethod
     def create_recurring_transaction(data, user, category,amount,transaction):
@@ -214,9 +214,9 @@ class BudgetService:
             if general_limit.budget_plan == 'Monthly':
                 monthly_transaction = Transaction.objects.filter(
                     user=user,
-                    type='Debit',
-                    date__month=current_month,
-                    date__year=current_year
+                    type='Expense',
+                    transaction_date__month=current_month,
+                    transaction_date__year=current_year
                 )
                 cost = sum(transaction.amount for transaction in monthly_transaction)
                 
@@ -233,9 +233,9 @@ class BudgetService:
 
                 weekly_transactions = Transaction.objects.filter(
                     user=user,
-                    type='Debit',
-                    date__gte=start_of_week,
-                    date__lte=end_of_week
+                    type='Expense',
+                    transaction_date__gte=start_of_week,
+                    transaction_date__lte=end_of_week
                 )
                 cost = sum(transaction.amount for transaction in weekly_transactions)
                 
@@ -249,8 +249,8 @@ class BudgetService:
                 today = date.today()
                 today_transactions = Transaction.objects.filter(
                     user=user,
-                    type='Debit',
-                    date__date=today
+                    type='Expense',
+                    transaction_date__date=today
                 )
                 cost = sum(transaction.amount for transaction in today_transactions)
                 
@@ -279,7 +279,7 @@ class SavingsService:
         savings_percentage = transaction.savings_percentage
         transaction_type = transaction.type
         
-        if transaction_type == 'Credit' and add_savings:
+        if transaction_type == 'Income' and add_savings:
             savings_id = transaction.savings.id
             savings = SavingPlan.objects.get(id=savings_id)
             
