@@ -1,3 +1,5 @@
+from django.db.models import Q
+
 from rest_framework import serializers
 
 from Account.serializers import CustomUserSerializer
@@ -42,7 +44,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     category = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(),
+        queryset=Category.objects.none(),
         required=False,
         allow_null=True,
     )
@@ -66,6 +68,14 @@ class TransactionSerializer(serializers.ModelSerializer):
             "savings_note",
             "recurring",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request:
+            self.fields['category'].queryset = Category.objects.filter(
+                Q(user=request.user) | Q(user__isnull=True, is_system=True)
+            )
 
     def get_user(self, obj):
         user = obj.user.username

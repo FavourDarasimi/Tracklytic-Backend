@@ -30,3 +30,8 @@ env/
 .idea/
 .vscode/
 *.swp
+
+
+celerybeat-schedule-shm
+celerybeat-schedule
+celerybeat-schedule-wal
