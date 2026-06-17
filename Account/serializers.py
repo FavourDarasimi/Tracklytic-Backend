@@ -1,6 +1,10 @@
+import logging
+
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer,UserCreatePasswordRetypeSerializer
 from .models import CustomUser
+
+logger = logging.getLogger(__name__)
 
 class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
     class Meta(UserCreatePasswordRetypeSerializer.Meta):
@@ -10,7 +14,7 @@ class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
     
 
     def perform_create(self, validated_data):
-        print(">>> PERFORM CREATE CALLED:", validated_data)
+        logger.debug("perform_create called with data: %s", validated_data)
         user = CustomUser.objects.create_user(
             email=validated_data['email'],
             username=validated_data['username'],

@@ -49,18 +49,8 @@ class Category(models.Model):
                 name='unique_user_category_name'
             )
         ]
-
     
 
-
-# class SubCategory(models.Model):
-#     user = models.ForeignKey(user, on_delete=models.CASCADE, null=True, blank=True)
-#     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-#     name =  models.CharField(max_length=100)
-#     tag = models.CharField(max_length=100,null=True,blank=True)
-
-#     def __str__(self):
-#         return f'{self.category.tag}__{self.name}'
 
 
 class GeneralSpendingLimit(models.Model):

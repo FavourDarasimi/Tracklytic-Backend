@@ -1,8 +1,11 @@
+import logging
 from google import genai
 from dotenv import load_dotenv
 import os
 import time
 import json
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -22,7 +25,7 @@ def extract_json_array(response):
         return None
 
     except Exception as e:
-        print(f"[PARSE ERROR] {e}")
+        logger.error("Failed to parse AI response: %s", e)
         return None
 
 def generate_fallback_insights(transactions, limits, saving_plans):

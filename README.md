@@ -112,40 +112,73 @@ The server will be available at `http://localhost:8000`
 
 ## 📱 API Endpoints
 
-### Authentication (Djoser)
+All API endpoints are prefixed with `/api/v1/`. Authentication endpoints use `/auth/v1/`.
 
-- `POST /auth/users/` - User registration
-- `POST /auth/jwt/create/` - User login (get JWT tokens)
-- `POST /auth/jwt/refresh/` - Refresh JWT token
-- `POST /auth/jwt/verify/` - Verify JWT token
+### Authentication (Djoser + Custom)
+
+- `POST /auth/v1/users/` - User registration
+- `GET /auth/v1/users/me/` - Get current user profile
+- `POST /auth/v1/jwt/create/` - User login (get JWT tokens)
+- `POST /auth/v1/jwt/refresh/` - Refresh JWT token
+- `POST /auth/v1/jwt/verify/` - Verify JWT token
+- `POST /auth/v1/logout/` - Logout (clears JWT cookies)
+- `POST /auth/v1/users/set_password/` - Set password
+- `POST /auth/v1/users/reset_password/` - Request password reset
+- `POST /auth/v1/users/reset_password_confirm/` - Confirm password reset
 
 ### Categories
 
-- `POST /api/add/category/` - Create new category
-- `GET /api/get/categories/` - Get user categories
+- `GET /api/v1/categories/` - List user categories
+- `POST /api/v1/categories/` - Create new category
+- `GET /api/v1/categories/<id>/` - Get category detail
+- `PUT /api/v1/categories/<id>/` - Update category
+- `PATCH /api/v1/categories/<id>/` - Partial update category
+- `DELETE /api/v1/categories/<id>/` - Delete category
 
 ### Transactions
 
-- `POST /api/add/transaction/` - Add manual transaction
-- `POST /api/transaction/upload/receipt/` - Upload receipt for OCR processing
+- `GET /api/v1/transactions/` - List transactions (supports `?search=`, `?type=`, `?category=`, `?date_from=`, `?date_to=`, `?ordering=`)
+- `POST /api/v1/transactions/` - Create transaction (supports receipt upload)
+- `GET /api/v1/transactions/<id>/` - Get transaction detail
+- `PUT /api/v1/transactions/<id>/` - Update transaction
+- `PATCH /api/v1/transactions/<id>/` - Partial update transaction
+- `DELETE /api/v1/transactions/<id>/` - Delete transaction
+- `POST /api/v1/transaction/upload/receipt/` - Upload receipt for OCR parsing
+
+### Recurring Transactions
+
+- `GET /api/v1/recurring-transactions/` - List recurring transactions
+- `POST /api/v1/recurring-transactions/` - Create recurring transaction
+- `GET /api/v1/recurring-transactions/<id>/` - Get recurring transaction detail
+- `PUT /api/v1/recurring-transactions/<id>/` - Update recurring transaction
+- `DELETE /api/v1/recurring-transactions/<id>/` - Delete recurring transaction
 
 ### Budget Management
 
-- `POST /api/add/general/budget/` - Set general spending limit
-- `POST /api/add/category/budget/` - Set category spending limit
-- `PUT /api/edit/general/budget/<id>/` - Edit general budget
-- `PUT /api/edit/category/budget/<id>/` - Edit category budget
+- `GET /api/v1/general-budgets/` - List general budgets
+- `POST /api/v1/general-budgets/` - Set general spending limit
+- `PUT /api/v1/general-budgets/<id>/` - Update general budget
+- `DELETE /api/v1/general-budgets/<id>/` - Delete general budget
+- `GET /api/v1/category-budgets/` - List category budgets
+- `POST /api/v1/category-budgets/` - Set category spending limit
+- `PUT /api/v1/category-budgets/<id>/` - Update category budget
+- `DELETE /api/v1/category-budgets/<id>/` - Delete category budget
 
 ### Savings Plans
 
-- `POST /api/add/saving/plan/` - Create savings plan
-- `GET /api/user/saving/plan/` - Get user savings plans
-- `GET /api/check/saving/plan/status/` - Check savings plan status
-- `PUT /api/renew/saving/plan/<id>/` - Renew savings plan
+- `GET /api/v1/saving-plans/` - List savings plans
+- `POST /api/v1/saving-plans/` - Create savings plan
+- `GET /api/v1/saving-plans/<id>/` - Get savings plan detail
+- `PUT /api/v1/saving-plans/<id>/` - Update savings plan
+- `PATCH /api/v1/saving-plans/<id>/` - Partial update savings plan
+- `DELETE /api/v1/saving-plans/<id>/` - Delete savings plan
+- `GET /api/v1/check/saving/plan/status/` - Check and update all savings plan statuses
+- `PUT /api/v1/renew/saving/plan/<pk>/` - Renew a savings plan with a new amount
 
-### AI Insights
+### Dashboard & AI
 
-- `GET /api/ai/insights/` - Get AI-powered financial insights
+- `GET /api/v1/dashboard/overview/` - Get monthly overview, expense distribution, budget summary, latest transactions
+- `GET /api/v1/ai/insights/` - Get AI-powered spending insights
 
 ## 🏦 OCR System Usage
 

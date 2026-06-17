@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.db.models import Q, Sum
 from django.db.models.functions import TruncDate
+from django_filters import rest_framework as filters
 from rest_framework import status, viewsets
+from rest_framework.filters import OrderingFilter
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -18,6 +20,7 @@ from Tracker.models import (
     RecurringTransaction,
     SavingPlan,
     Transaction,
+    Type,
 )
 from Tracker.serializers import (
     CategorySerializer,
@@ -63,7 +66,31 @@ class CategoryViewSet(viewsets.ModelViewSet):
         )
 
 
+class TransactionFilter(filters.FilterSet):
+    search = filters.CharFilter(method="filter_search")
+    date_from = filters.DateTimeFilter(field_name="transaction_date", lookup_expr="gte")
+    date_to = filters.DateTimeFilter(field_name="transaction_date", lookup_expr="lte")
+    type = filters.ChoiceFilter(choices=Type)
+    category = filters.NumberFilter(field_name="category__id")
+    amount_min = filters.NumberFilter(field_name="amount", lookup_expr="gte")
+    amount_max = filters.NumberFilter(field_name="amount", lookup_expr="lte")
+
+    class Meta:
+        model = Transaction
+        fields = ["type", "category", "date_from", "date_to", "amount_min", "amount_max"]
+
+    def filter_search(self, queryset, name, value):
+        return queryset.filter(
+            Q(party_name__icontains=value) | Q(notes__icontains=value)
+        )
+
+
 class TransactionViewSet(viewsets.ModelViewSet):
+    filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
+    filterset_class = TransactionFilter
+    ordering_fields = ["amount", "transaction_date", "created_at"]
+    ordering = ["-transaction_date"]
+
     def get_serializer_class(self):
         if self.action == "list":
             return ListTransactionSerializer
@@ -73,7 +100,6 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return (
             Transaction.objects.filter(user=self.request.user, is_deleted=False)
             .select_related("category")
-            .order_by("-transaction_date")
         )
 
     def create(self, request, *args, **kwargs):
@@ -354,14 +380,13 @@ class RenewSavingGoal(APIView):
             serializer = SavingPlanSerializer(
                 instance=saving_plan, data=data, partial=True
             )
-            if serializer.is_valid():
-                new_saving_plan_amount = serializer.validated_data["savings_amount"]
-                success, message = SavingPlanService.renew_saving_plan(
-                    saving_plan, new_saving_plan_amount
-                )
-                if not success:
-                    return create_error_response(message)
-                return create_success_response(message, serializer.data)
+            serializer.is_valid(raise_exception=True)
+            new_saving_plan_amount = serializer.validated_data["savings_amount"]
+            success, message = SavingPlanService.renew_saving_plan(
+                saving_plan, new_saving_plan_amount
+            )
+            if not success:
+                return create_error_response(message)
+            return create_success_response(message, serializer.data)
         except SavingPlan.DoesNotExist:
             return create_error_response("Saving Plan does not exist")
-        return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)

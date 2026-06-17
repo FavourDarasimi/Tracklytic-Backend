@@ -13,23 +13,6 @@ from .models import (
     Transaction,
 )
 
-# class SubCategorySerializer(serializers.ModelSerializer):
-#     user = serializers.SerializerMethodField(read_only=True)
-#     category = serializers.SerializerMethodField(read_only=True)
-
-#     class Meta:
-#         model = SubCategory
-#         fields = ['id','user','category','name','tag']
-
-#     def get_user(self,obj):
-#         user = obj.user.username
-#         return user
-
-#     def get_category(self,obj):
-#         category = obj.category.name
-#         return category
-
-
 class CategorySerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
 
@@ -223,6 +206,7 @@ class SavingPlanSerializer(serializers.ModelSerializer):
 class RecurringTransactionSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     category = serializers.SerializerMethodField(read_only=True)
+    frequency = serializers.ChoiceField(choices=['Daily', 'Weekly', 'Monthly', 'Yearly'])
 
     class Meta:
         model = RecurringTransaction

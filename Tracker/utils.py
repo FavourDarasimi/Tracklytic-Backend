@@ -1,3 +1,4 @@
+import logging
 import os
 from google import genai
 import json
@@ -7,7 +8,8 @@ from pathlib import Path
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.response import Response
-import re
+
+logger = logging.getLogger(__name__)
 
 def create_success_response(message, data=None, status_code=status.HTTP_200_OK):
     """
@@ -171,7 +173,7 @@ def extract_transaction_data(file_path):
 
         except Exception as e:
             last_error = str(e)
-            print(f"[WARNING] {model_name} failed: {e}, trying next model...")
+            logger.warning("%s failed: %s, trying next model...", model_name, e)
             continue
 
     # All models failed
