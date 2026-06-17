@@ -35,7 +35,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "user", "name", "tag", "is_system", "icon", "color"]
+        fields = ["id", "user", "name", "type", "tag", "is_system", "icon", "color"]
 
     def get_user(self, obj):
         return obj.user.username if obj.user else None

@@ -35,3 +35,5 @@ env/
 celerybeat-schedule-shm
 celerybeat-schedule
 celerybeat-schedule-wal
+
+pytest.ini

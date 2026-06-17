@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from django.db.models import Q
+from django.db.models import Q, Sum
 
 from Tracker.models import (
     Category,
@@ -247,13 +247,12 @@ class BudgetService:
             current_year = datetime.now().year
 
             if general_limit.budget_plan == "Monthly":
-                monthly_transaction = Transaction.objects.filter(
+                cost = Transaction.objects.filter(
                     user=user,
                     type="Expense",
                     transaction_date__month=current_month,
                     transaction_date__year=current_year,
-                )
-                cost = sum(transaction.amount for transaction in monthly_transaction)
+                ).aggregate(total=Sum("amount"))["total"] or 0
 
                 if cost >= general_limit.budget_amount:
                     return "Your Monthly Limit has been Reached"
@@ -268,13 +267,12 @@ class BudgetService:
                 )  # Sunday
                 end_of_week = start_of_week + timedelta(days=6)  # Saturday
 
-                weekly_transactions = Transaction.objects.filter(
+                cost = Transaction.objects.filter(
                     user=user,
                     type="Expense",
                     transaction_date__gte=start_of_week,
                     transaction_date__lte=end_of_week,
-                )
-                cost = sum(transaction.amount for transaction in weekly_transactions)
+                ).aggregate(total=Sum("amount"))["total"] or 0
 
                 if cost >= general_limit.budget_amount:
                     return "Your Weekly Limit has been Reached"
@@ -284,10 +282,9 @@ class BudgetService:
 
             elif general_limit.budget_plan == "Daily":
                 today = date.today()
-                today_transactions = Transaction.objects.filter(
+                cost = Transaction.objects.filter(
                     user=user, type="Expense", transaction_date__date=today
-                )
-                cost = sum(transaction.amount for transaction in today_transactions)
+                ).aggregate(total=Sum("amount"))["total"] or 0
 
                 if cost >= general_limit.budget_amount:
                     return "Your Daily Limit has been Reached"

@@ -23,3 +23,8 @@ python-dotenv==1.0.0
 
 # Utilities
 requests==2.31.0
+
+# Testing
+pytest==9.1.0
+pytest-django==4.12.0
+model-bakery==1.23.5

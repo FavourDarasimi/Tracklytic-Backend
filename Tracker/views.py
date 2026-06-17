@@ -257,7 +257,7 @@ class DashboardOverview(APIView):
             chart_labels.append(label_date.strftime("%b %d"))
             chart_values.append(day_totals.get(label_date, 0))
 
-        latest_transactions = transactions.order_by("-created_at")[:5]
+        latest_transactions = transactions.select_related("savings").order_by("-created_at")[:5]
 
         general_limit = GeneralSpendingLimit.objects.filter(user=user).first()
         budget_summary = None

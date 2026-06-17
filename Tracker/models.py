@@ -66,7 +66,7 @@ class Category(models.Model):
 class GeneralSpendingLimit(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
     budget_plan = models.CharField(choices=Plan,max_length=100,blank=True)
-    budget_amount = models.PositiveIntegerField()
+    budget_amount = models.DecimalField(max_digits=12, decimal_places=2)
 
     def __str__(self):
         return self.user.username
@@ -82,7 +82,7 @@ class CategorySpendingLimit(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE,null=True,blank=True)
     budget_plan = models.CharField(choices=Plan,max_length=100,blank=True)
-    budget_amount = models.PositiveIntegerField()
+    budget_amount = models.DecimalField(max_digits=12, decimal_places=2)
 
     def __str__(self):
         return f'{self.user.username} - {self.category}'
@@ -106,8 +106,8 @@ class CategorySpendingLimit(models.Model):
 class SavingPlan(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE,null=True,blank=True)
     name = models.CharField(max_length=100)
-    savings_amount = models.PositiveIntegerField()
-    savings_reached_amount = models.PositiveIntegerField(default=0)
+    savings_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    savings_reached_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     savings_reached = models.BooleanField(default=False)
     deadline = models.DateField(null=True,blank=True)
     status = models.CharField(choices=Saving_Plan_Status,max_length=100,null=True,blank=True)
@@ -129,7 +129,7 @@ class SavingPlan(models.Model):
 class Transaction(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE)
     party_name = models.CharField(max_length=200,null=True,blank=True)
-    amount = models.PositiveIntegerField(null=True,blank=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     type = models.CharField(choices=Type,max_length=50,null=True,blank=True)
     category= models.ForeignKey(Category, on_delete=models.CASCADE,null=True,blank=True)
     notes = models.TextField(max_length=500,blank=True,null=True)
@@ -137,7 +137,7 @@ class Transaction(models.Model):
     transaction_date = models.DateTimeField(null=True, blank=True,default=timezone.now)
     created_at = models.DateTimeField(auto_now_add=True)
     add_savings = models.BooleanField(default=False)
-    savings_percentage = models.PositiveIntegerField(null=True,blank=True)
+    savings_percentage = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     savings = models.ForeignKey(SavingPlan,on_delete=models.CASCADE,null=True,blank=True)
     savings_note = models.TextField(max_length=500,blank=True,null=True)
     recurring = models.BooleanField(default=False)
