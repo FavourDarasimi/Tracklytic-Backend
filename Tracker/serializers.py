@@ -50,12 +50,13 @@ class TransactionSerializer(serializers.ModelSerializer):
             "savings",
             "savings_note",
             "recurring",
+            "currency",
         ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         request = self.context.get('request')
-        if request:
+        if request and request.user.is_authenticated:
             self.fields['category'].queryset = Category.objects.filter(
                 Q(user=request.user) | Q(user__isnull=True, is_system=True)
             )
@@ -82,6 +83,7 @@ class ListTransactionSerializer(serializers.ModelSerializer):
             "receipt",
             "transaction_date",
             "created_at",
+            "currency",
         ]
 
     def get_user(self, obj):
@@ -123,6 +125,7 @@ class DashboardTransactionSerializer(serializers.ModelSerializer):
             "savings",
             "savings_note",
             "recurring",
+            "currency",
         ]
 
     def get_user(self, obj):
@@ -179,9 +182,6 @@ class CategorySpendingLimitSerializer(serializers.ModelSerializer):
         return category
 
 
-# day2
-
-
 class SavingPlanSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
 
@@ -220,3 +220,15 @@ class RecurringTransactionSerializer(serializers.ModelSerializer):
             "end_date",
             "active",
         ]
+
+    def get_user(self, obj):
+        return obj.user.username
+
+    def get_category(self, obj):
+        return obj.category.name if obj.category else None
+
+
+class BulkDeleteSerializer(serializers.Serializer):
+    ids = serializers.ListField(
+        child=serializers.IntegerField(), allow_empty=False
+    )

@@ -2,9 +2,15 @@ import logging
 
 from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer,UserCreatePasswordRetypeSerializer
-from .models import CustomUser
+from .models import CustomUser, UserProfile
 
 logger = logging.getLogger(__name__)
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['avatar', 'preferences', 'locale', 'timezone', 'base_currency']
+
 
 class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
     class Meta(UserCreatePasswordRetypeSerializer.Meta):
@@ -27,8 +33,8 @@ class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):
         
   
 class CustomUserSerializer(UserSerializer):
+    profile = UserProfileSerializer(read_only=True)
+
     class Meta(UserSerializer.Meta):
         model = CustomUser
-        fields = ['id', 'email', 'username', 'first_name','last_name', 'created_at']
-
-#day2
+        fields = ['id', 'email', 'username', 'first_name','last_name', 'created_at', 'profile']

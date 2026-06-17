@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
+from Account.models import CURRENCIES
 
 user = get_user_model()
 
@@ -33,10 +34,10 @@ class Category(models.Model):
     is_system = models.BooleanField(default=False)
     icon = models.CharField(max_length=100, null=True, blank=True)
     color = models.CharField(max_length=20, null=True, blank=True)
-    
+
     def __str__(self):
         return self.name
-    
+
     class Meta:
         indexes = [
             models.Index(
@@ -49,7 +50,6 @@ class Category(models.Model):
                 name='unique_user_category_name'
             )
         ]
-    
 
 
 
@@ -60,7 +60,7 @@ class GeneralSpendingLimit(models.Model):
 
     def __str__(self):
         return self.user.username
-    
+
     class Meta:
         indexes = [
             models.Index(
@@ -76,7 +76,7 @@ class CategorySpendingLimit(models.Model):
 
     def __str__(self):
         return f'{self.user.username} - {self.category}'
- 
+
     class Meta:
         indexes = [
             models.Index(
@@ -104,7 +104,7 @@ class SavingPlan(models.Model):
 
     def __str__(self):
         return f'{self.user.username} {self.name} savings'
-    
+
     class Meta:
         indexes = [
             models.Index(
@@ -132,12 +132,11 @@ class Transaction(models.Model):
     savings_note = models.TextField(max_length=500,blank=True,null=True)
     recurring = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-
-    
+    currency = models.CharField(max_length=3, choices=CURRENCIES, default="NGN")
 
     def __str__(self):
         return f'{self.user.username} - {self.type} - {self.party_name}'
-    
+
     class Meta:
         indexes = [
             models.Index(
@@ -150,7 +149,7 @@ class Transaction(models.Model):
                 fields=['is_deleted']
             )
         ]
-    
+
 
 class RecurringTransaction(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE)
@@ -161,9 +160,7 @@ class RecurringTransaction(models.Model):
     next_due_date = models.DateField()
     end_date = models.DateField(null=True, blank=True)
     active = models.BooleanField(default=True)
-    
 
-    
     class Meta:
         indexes = [
             models.Index(
@@ -173,5 +170,16 @@ class RecurringTransaction(models.Model):
                 fields=['next_due_date']
             )
         ]
-    
-# Create your models here.
+
+
+class CurrencyExchangeRate(models.Model):
+    base_currency = models.CharField(max_length=3, choices=CURRENCIES)
+    target_currency = models.CharField(max_length=3, choices=CURRENCIES)
+    rate = models.DecimalField(max_digits=18, decimal_places=8)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['base_currency', 'target_currency']
+
+    def __str__(self):
+        return f"{self.base_currency} → {self.target_currency}: {self.rate}"

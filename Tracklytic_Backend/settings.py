@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "djoser",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -154,6 +155,30 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
     },
     "EXCEPTION_HANDLER": "Tracklytic_Backend.exceptions.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Tracklytic API",
+    "DESCRIPTION": "Personal finance tracking API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "CurrencyEnum": [
+            code for code, _ in [
+                ("NGN", "Naira (NGN)"),
+                ("USD", "US Dollar (USD)"),
+                ("EUR", "Euro (EUR)"),
+                ("GBP", "British Pound (GBP)"),
+                ("CAD", "Canadian Dollar (CAD)"),
+                ("AUD", "Australian Dollar (AUD)"),
+                ("JPY", "Japanese Yen (JPY)"),
+                ("KES", "Kenyan Shilling (KES)"),
+                ("ZAR", "South African Rand (ZAR)"),
+                ("GHS", "Ghanaian Cedi (GHS)"),
+            ]
+        ],
+    },
 }
 
 # Djoser settings
@@ -215,6 +240,16 @@ CORS_ALLOW_CREDENTIALS = True
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://localhost:6379/1"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
@@ -229,5 +264,9 @@ CELERY_BEAT_SCHEDULE = {
     "process-recurring-transactions-daily": {
         "task": "Tracker.tasks.process_due_recurring_transactions",
         "schedule": crontab(hour=0, minute=0),
+    },
+    "update-exchange-rates": {
+        "task": "Tracker.tasks.update_exchange_rates",
+        "schedule": crontab(hour="*/6", minute=0),
     },
 }

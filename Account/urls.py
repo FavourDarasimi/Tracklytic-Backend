@@ -1,9 +1,8 @@
-# yourapp/urls.py
 from django.urls import path, include
-from .views import CustomTokenObtainPairView, Logout
+from .views import CustomTokenObtainPairView, Logout, UserProfileView
 
 urlpatterns = [
     # path('jwt/create/', CustomTokenObtainPairView.as_view()),
     path('logout/', Logout.as_view()),
-#day2
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
 ]

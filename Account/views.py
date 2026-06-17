@@ -1,8 +1,13 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework import status
+from rest_framework import generics
+
+from .serializers import CustomUserSerializer, UserProfileSerializer
+from .models import UserProfile
+
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -31,8 +36,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         response.data = {'message': 'Login successful'}
         return response
 
+
 class Logout(APIView):
-    def post(self,request:Request):
+    @extend_schema(responses={200: {"type": "object", "properties": {"status": {"type": "string"}, "message": {"type": "string"}}}})
+    def post(self, request: Request):
         response = Response({
             'status': 'success',
             'message': 'User Logged out'
@@ -41,5 +48,10 @@ class Logout(APIView):
         response.delete_cookie("refresh_token")
         return response
 
-    # day2
-# Create your views here.
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserProfileSerializer
+
+    def get_object(self):
+        profile, _ = UserProfile.objects.get_or_create(user=self.request.user)
+        return profile

@@ -240,57 +240,78 @@ class BudgetService:
         from datetime import date, datetime, timedelta
 
         from Tracker.models import Transaction
+        from Tracker.utils import convert_currency
 
         try:
             general_limit = GeneralSpendingLimit.objects.get(user=user)
             current_month = datetime.now().month
             current_year = datetime.now().year
 
+            try:
+                base_currency = user.profile.base_currency
+            except user._meta.model.profile.RelatedObjectDoesNotExist:
+                base_currency = "NGN"
+
             if general_limit.budget_plan == "Monthly":
-                cost = Transaction.objects.filter(
+                expenses = Transaction.objects.filter(
                     user=user,
                     type="Expense",
                     transaction_date__month=current_month,
                     transaction_date__year=current_year,
-                ).aggregate(total=Sum("amount"))["total"] or 0
+                ).values("currency").annotate(total=Sum("amount"))
 
-                if cost >= general_limit.budget_amount:
+                cost = sum(
+                    convert_currency(e["total"], e["currency"], base_currency)
+                    for e in expenses
+                )
+
+                if cost >= float(general_limit.budget_amount):
                     return "Your Monthly Limit has been Reached"
                 else:
-                    total = general_limit.budget_amount - cost
-                    return f"{total} remaining to reach your Monthly Limit"
+                    remaining = float(general_limit.budget_amount) - cost
+                    return f"{remaining:.2f} remaining to reach your Monthly Limit"
 
             elif general_limit.budget_plan == "Weekly":
                 today = date.today()
                 start_of_week = today - timedelta(
                     days=(today.weekday() + 1) % 7
-                )  # Sunday
-                end_of_week = start_of_week + timedelta(days=6)  # Saturday
+                )
+                end_of_week = start_of_week + timedelta(days=6)
 
-                cost = Transaction.objects.filter(
+                expenses = Transaction.objects.filter(
                     user=user,
                     type="Expense",
                     transaction_date__gte=start_of_week,
                     transaction_date__lte=end_of_week,
-                ).aggregate(total=Sum("amount"))["total"] or 0
+                ).values("currency").annotate(total=Sum("amount"))
 
-                if cost >= general_limit.budget_amount:
+                cost = sum(
+                    convert_currency(e["total"], e["currency"], base_currency)
+                    for e in expenses
+                )
+
+                if cost >= float(general_limit.budget_amount):
                     return "Your Weekly Limit has been Reached"
                 else:
-                    total = general_limit.budget_amount - cost
-                    return f"{total} remaining to reach your Weekly Limit"
+                    remaining = float(general_limit.budget_amount) - cost
+                    return f"{remaining:.2f} remaining to reach your Weekly Limit"
 
             elif general_limit.budget_plan == "Daily":
                 today = date.today()
-                cost = Transaction.objects.filter(
+                expenses = Transaction.objects.filter(
                     user=user, type="Expense", transaction_date__date=today
-                ).aggregate(total=Sum("amount"))["total"] or 0
+                ).values("currency").annotate(total=Sum("amount"))
 
-                if cost >= general_limit.budget_amount:
+                cost = sum(
+                    convert_currency(e["total"], e["currency"], base_currency)
+                    for e in expenses
+                )
+
+                if cost >= float(general_limit.budget_amount):
                     return "Your Daily Limit has been Reached"
                 else:
-                    total = general_limit.budget_amount - cost
-                    return f"{total} remaining to reach your Daily Limit"
+                    remaining = float(general_limit.budget_amount) - cost
+                    return f"{remaining:.2f} remaining to reach your Daily Limit"
 
             return None
         except GeneralSpendingLimit.DoesNotExist:

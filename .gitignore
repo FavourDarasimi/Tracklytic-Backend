@@ -37,3 +37,5 @@ celerybeat-schedule
 celerybeat-schedule-wal
 
 pytest.ini
+
+schema.json

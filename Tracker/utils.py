@@ -82,6 +82,25 @@ def validate_saving_plan_exists(savings_id, user):
 
 
 
+def convert_currency(amount, from_currency, to_currency):
+    if from_currency == to_currency or not amount:
+        return amount
+    from Tracker.models import CurrencyExchangeRate
+    try:
+        rate_obj = CurrencyExchangeRate.objects.get(
+            base_currency=from_currency, target_currency=to_currency
+        )
+        return float(amount) * float(rate_obj.rate)
+    except CurrencyExchangeRate.DoesNotExist:
+        try:
+            rate_obj = CurrencyExchangeRate.objects.get(
+                base_currency=to_currency, target_currency=from_currency
+            )
+            return float(amount) / float(rate_obj.rate)
+        except CurrencyExchangeRate.DoesNotExist:
+            return amount
+
+
 client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
 def extract_transaction_data(file_path):
