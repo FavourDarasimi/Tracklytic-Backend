@@ -22,9 +22,9 @@ from rest_framework.views import APIView
 from Tracker.ai_client import generate_spending_advice
 from Tracker.models import (
     Category,
-    CategorySpendingLimit,
+    CategoryBudget,
     CurrencyExchangeRate,
-    GeneralSpendingLimit,
+    GeneralBudget,
     RecurringTransaction,
     SavingPlan,
     Transaction,
@@ -33,9 +33,9 @@ from Tracker.models import (
 from Tracker.serializers import (
     BulkDeleteSerializer,
     CategorySerializer,
-    CategorySpendingLimitSerializer,
+    CategoryBudgetSerializer,
     DashboardTransactionSerializer,
-    GeneralSpendingLimitSerializer,
+    GeneralBudgetSerializer,
     ListTransactionSerializer,
     MakeRecurringSerializer,
     RecurringTransactionSerializer,
@@ -380,12 +380,12 @@ class RecurringTransactionViewSet(viewsets.ModelViewSet):
 
 @extend_schema(tags=["Budgets"])
 class GeneralBudgetViewSet(viewsets.ModelViewSet):
-    serializer_class = GeneralSpendingLimitSerializer
+    serializer_class = GeneralBudgetSerializer
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
-            return GeneralSpendingLimit.objects.none()
-        return GeneralSpendingLimit.objects.filter(user=self.request.user)
+            return GeneralBudget.objects.none()
+        return GeneralBudget.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         budget_exists, error_message = BudgetService.check_general_budget_exists(
@@ -401,12 +401,12 @@ class GeneralBudgetViewSet(viewsets.ModelViewSet):
 
 @extend_schema(tags=["Budgets"])
 class CategoryBudgetViewSet(viewsets.ModelViewSet):
-    serializer_class = CategorySpendingLimitSerializer
+    serializer_class = CategoryBudgetSerializer
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
-            return CategorySpendingLimit.objects.none()
-        return CategorySpendingLimit.objects.filter(user=self.request.user)
+            return CategoryBudget.objects.none()
+        return CategoryBudget.objects.filter(user=self.request.user)
 
     def create(self, request, *args, **kwargs):
         data = request.data
@@ -583,14 +583,14 @@ class DashboardOverview(APIView):
             "-created_at"
         )[:5]
 
-        general_limit = GeneralSpendingLimit.objects.filter(user=user).first()
+        general_limit = GeneralBudget.objects.filter(user=user).first()
         budget_summary = None
         if general_limit is not None:
             budget_limit_converted = convert_currency(
-                float(general_limit.budget_amount), "NGN", base_currency
+                float(general_limit.amount), "NGN", base_currency
             )
             budget_summary = {
-                "plan": general_limit.budget_plan,
+                "plan": general_limit.period,
                 "limit": round(budget_limit_converted, 2),
                 "spent": round(monthly_expenses, 2),
                 "remaining": round(
@@ -634,8 +634,8 @@ class AiClient(APIView):
         transactions = Transaction.objects.filter(user=user).order_by(
             "-transaction_date"
         )[:20]
-        general_limit = GeneralSpendingLimit.objects.filter(user=user).first()
-        category_limits = CategorySpendingLimit.objects.filter(user=user)
+        general_limit = GeneralBudget.objects.filter(user=user).first()
+        category_limits = CategoryBudget.objects.filter(user=user)
         saving_plans = SavingPlan.objects.filter(user=user)
         limits = {"general": general_limit, "categories": category_limits}
         advice = generate_spending_advice(user, transactions, limits, saving_plans)

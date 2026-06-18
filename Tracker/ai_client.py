@@ -104,9 +104,9 @@ def generate_spending_advice(user, transactions, limits, saving_plans):
     # Format general/category limits
     limit_summary = []
     if limits.get("general"):
-        limit_summary.append(f"General Limit: ₦{limits['general'].budget_amount} ({limits['general'].budget_plan})")
+        limit_summary.append(f"General Limit: ₦{limits['general'].amount} ({limits['general'].period})")
     for c_limit in limits.get("categories", []):
-        limit_summary.append(f"{c_limit.category.name}: ₦{c_limit.budget_amount} ({c_limit.budget_plan})")
+        limit_summary.append(f"{c_limit.category.name}: ₦{c_limit.amount} ({c_limit.period})")
     limit_summary = "\n".join(limit_summary)
 
     # Format saving plans

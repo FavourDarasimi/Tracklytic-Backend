@@ -5,7 +5,7 @@ from model_bakery import baker
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from Tracker.models import Category, GeneralSpendingLimit, SavingPlan, Transaction
+from Tracker.models import Category, GeneralBudget, SavingPlan, Transaction
 from Tracker.serializers import CategorySerializer, TransactionSerializer
 
 User = get_user_model()
@@ -53,7 +53,7 @@ class TestBudgetServiceAggregation:
     def test_get_general_limit_status_uses_sum_aggregation(self):
         user = baker.make(User)
         limit = baker.make(
-            GeneralSpendingLimit, user=user, budget_plan="Monthly", budget_amount=10000
+            GeneralBudget, user=user, period="Monthly", amount=10000
         )
         baker.make(Transaction, user=user, type="Expense", amount=3000, _quantity=3)
 
@@ -62,7 +62,7 @@ class TestBudgetServiceAggregation:
         ).aggregate(total=Sum("amount"))["total"]
 
         assert monthly_expense == 9000
-        assert monthly_expense < limit.budget_amount
+        assert monthly_expense < limit.amount
 
 
 @pytest.mark.django_db

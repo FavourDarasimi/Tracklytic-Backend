@@ -6,8 +6,8 @@ from Account.serializers import CustomUserSerializer
 
 from .models import (
     Category,
-    CategorySpendingLimit,
-    GeneralSpendingLimit,
+    CategoryBudget,
+    GeneralBudget,
     RecurringTransaction,
     SavingPlan,
     Transaction,
@@ -51,6 +51,7 @@ class TransactionSerializer(serializers.ModelSerializer):
             "savings_note",
             "recurring",
             "currency",
+            "is_deleted",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -84,6 +85,7 @@ class ListTransactionSerializer(serializers.ModelSerializer):
             "transaction_date",
             "created_at",
             "currency",
+            "is_deleted",
         ]
 
     def get_user(self, obj):
@@ -126,6 +128,7 @@ class DashboardTransactionSerializer(serializers.ModelSerializer):
             "savings_note",
             "recurring",
             "currency",
+            "is_deleted",
         ]
 
     def get_user(self, obj):
@@ -153,25 +156,25 @@ class DashboardTransactionSerializer(serializers.ModelSerializer):
         }
 
 
-class GeneralSpendingLimitSerializer(serializers.ModelSerializer):
+class GeneralBudgetSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = GeneralSpendingLimit
-        fields = ["id", "user", "budget_plan", "budget_amount"]
+        model = GeneralBudget
+        fields = ["id", "user", "name", "amount", "period"]
 
     def get_user(self, obj):
         user = obj.user.username
         return user
 
 
-class CategorySpendingLimitSerializer(serializers.ModelSerializer):
+class CategoryBudgetSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField(read_only=True)
     category = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
-        model = CategorySpendingLimit
-        fields = ["id", "user", "category", "budget_plan", "budget_amount"]
+        model = CategoryBudget
+        fields = ["id", "user", "category", "name", "amount", "period"]
 
     def get_user(self, obj):
         user = obj.user.username
@@ -196,6 +199,7 @@ class SavingPlanSerializer(serializers.ModelSerializer):
             "savings_reached",
             "deadline",
             "status",
+            "priority",
         ]
 
     def get_user(self, obj):

@@ -4,7 +4,7 @@ from decimal import Decimal
 from model_bakery import baker
 
 from django.contrib.auth import get_user_model
-from Tracker.models import SavingPlan, Transaction, GeneralSpendingLimit
+from Tracker.models import SavingPlan, Transaction, GeneralBudget
 from Tracker.services import SavingPlanService, BudgetService
 
 User = get_user_model()
@@ -57,10 +57,10 @@ class TestBudgetService:
     def test_general_limit_monthly_not_reached(self):
         user = baker.make(User)
         baker.make(
-            GeneralSpendingLimit,
+            GeneralBudget,
             user=user,
-            budget_plan="Monthly",
-            budget_amount=Decimal("10000"),
+            period="Monthly",
+            amount=Decimal("10000"),
         )
         baker.make(
             Transaction, user=user, type="Expense", amount=Decimal("3000")
@@ -73,10 +73,10 @@ class TestBudgetService:
     def test_general_limit_monthly_reached(self):
         user = baker.make(User)
         baker.make(
-            GeneralSpendingLimit,
+            GeneralBudget,
             user=user,
-            budget_plan="Monthly",
-            budget_amount=Decimal("5000"),
+            period="Monthly",
+            amount=Decimal("5000"),
         )
         baker.make(
             Transaction, user=user, type="Expense", amount=Decimal("6000")

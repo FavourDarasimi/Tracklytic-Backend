@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['avatar', 'preferences', 'locale', 'timezone', 'base_currency']
+        fields = ['avatar', 'preferences', 'locale', 'timezone', 'base_currency', 'age', 'phone_number', 'occupation', 'bio']
 
 
 class CustomUserCreateSerializer(UserCreatePasswordRetypeSerializer):

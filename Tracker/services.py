@@ -5,8 +5,8 @@ from django.db.models import Q, Sum
 
 from Tracker.models import (
     Category,
-    CategorySpendingLimit,
-    GeneralSpendingLimit,
+    CategoryBudget,
+    GeneralBudget,
     RecurringTransaction,
     SavingPlan,
 )
@@ -211,9 +211,9 @@ class BudgetService:
         # Check if user already has a general budget
 
         try:
-            budget = GeneralSpendingLimit.objects.get(user=user)
-            return True, f"User already has a {budget.budget_plan} General Budget"
-        except GeneralSpendingLimit.DoesNotExist:
+            budget = GeneralBudget.objects.get(user=user)
+            return True, f"User already has a {budget.period} General Budget"
+        except GeneralBudget.DoesNotExist:
             return False, None
 
     @staticmethod
@@ -222,14 +222,14 @@ class BudgetService:
         # Check if a category already has a budget
 
         try:
-            category_budget = CategorySpendingLimit.objects.get(
+            category_budget = CategoryBudget.objects.get(
                 category_id=category_id, user=user
             )
             category = Category.objects.get(
                 Q(id=category_id), Q(user=user) | Q(user__isnull=True, is_system=True)
             )
             return True, f"{category.name} Category already has a budget"
-        except CategorySpendingLimit.DoesNotExist:
+        except CategoryBudget.DoesNotExist:
             return False, None
 
     @staticmethod
@@ -243,7 +243,7 @@ class BudgetService:
         from Tracker.utils import convert_currency
 
         try:
-            general_limit = GeneralSpendingLimit.objects.get(user=user)
+            general_limit = GeneralBudget.objects.get(user=user)
             current_month = datetime.now().month
             current_year = datetime.now().year
 
@@ -252,7 +252,7 @@ class BudgetService:
             except user._meta.model.profile.RelatedObjectDoesNotExist:
                 base_currency = "NGN"
 
-            if general_limit.budget_plan == "Monthly":
+            if general_limit.period == "Monthly":
                 expenses = Transaction.objects.filter(
                     user=user,
                     type="Expense",
@@ -260,18 +260,18 @@ class BudgetService:
                     transaction_date__year=current_year,
                 ).values("currency").annotate(total=Sum("amount"))
 
-                cost = sum(
+                cost = float(sum(
                     convert_currency(e["total"], e["currency"], base_currency)
                     for e in expenses
-                )
+                ))
 
-                if cost >= float(general_limit.budget_amount):
+                if cost >= float(general_limit.amount):
                     return "Your Monthly Limit has been Reached"
                 else:
-                    remaining = float(general_limit.budget_amount) - cost
+                    remaining = float(general_limit.amount) - cost
                     return f"{remaining:.2f} remaining to reach your Monthly Limit"
 
-            elif general_limit.budget_plan == "Weekly":
+            elif general_limit.period == "Weekly":
                 today = date.today()
                 start_of_week = today - timedelta(
                     days=(today.weekday() + 1) % 7
@@ -285,36 +285,54 @@ class BudgetService:
                     transaction_date__lte=end_of_week,
                 ).values("currency").annotate(total=Sum("amount"))
 
-                cost = sum(
+                cost = float(sum(
                     convert_currency(e["total"], e["currency"], base_currency)
                     for e in expenses
-                )
+                ))
 
-                if cost >= float(general_limit.budget_amount):
+                if cost >= float(general_limit.amount):
                     return "Your Weekly Limit has been Reached"
                 else:
-                    remaining = float(general_limit.budget_amount) - cost
+                    remaining = float(general_limit.amount) - cost
                     return f"{remaining:.2f} remaining to reach your Weekly Limit"
 
-            elif general_limit.budget_plan == "Daily":
+            elif general_limit.period == "Daily":
                 today = date.today()
                 expenses = Transaction.objects.filter(
                     user=user, type="Expense", transaction_date__date=today
                 ).values("currency").annotate(total=Sum("amount"))
 
-                cost = sum(
+                cost = float(sum(
                     convert_currency(e["total"], e["currency"], base_currency)
                     for e in expenses
-                )
+                ))
 
-                if cost >= float(general_limit.budget_amount):
+                if cost >= float(general_limit.amount):
                     return "Your Daily Limit has been Reached"
                 else:
-                    remaining = float(general_limit.budget_amount) - cost
+                    remaining = float(general_limit.amount) - cost
                     return f"{remaining:.2f} remaining to reach your Daily Limit"
 
+            elif general_limit.period == "Yearly":
+                expenses = Transaction.objects.filter(
+                    user=user,
+                    type="Expense",
+                    transaction_date__year=current_year,
+                ).values("currency").annotate(total=Sum("amount"))
+
+                cost = float(sum(
+                    convert_currency(e["total"], e["currency"], base_currency)
+                    for e in expenses
+                ))
+
+                if cost >= float(general_limit.amount):
+                    return "Your Yearly Limit has been Reached"
+                else:
+                    remaining = float(general_limit.amount) - cost
+                    return f"{remaining:.2f} remaining to reach your Yearly Limit"
+
             return None
-        except GeneralSpendingLimit.DoesNotExist:
+        except GeneralBudget.DoesNotExist:
             return "User does not have a general spending limit"
 
 

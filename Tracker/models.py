@@ -15,6 +15,7 @@ Plan = (
     ("Daily", "Daily"),
     ("Weekly", "Weekly"),
     ("Monthly", "Monthly"),
+    ("Yearly", "Yearly"),
 )
 
 Category_Type = (
@@ -25,6 +26,11 @@ Saving_Plan_Status = (
     ("Active", "Active"),
     ("Past Deadline", "Past Deadline"),
     ("Completed", "Completed"),
+)
+Priority = (
+    ("Low", "Low"),
+    ("Medium", "Medium"),
+    ("High", "High"),
 )
 
 
@@ -49,25 +55,27 @@ class Category(models.Model):
         ]
 
 
-class GeneralSpendingLimit(models.Model):
+class GeneralBudget(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE, null=True, blank=True)
-    budget_plan = models.CharField(choices=Plan, max_length=100, blank=True)
-    budget_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    name = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    period = models.CharField(choices=Plan, max_length=100)
 
     def __str__(self):
-        return self.user.username
+        return self.name
 
     class Meta:
-        indexes = [models.Index(fields=["user", "budget_plan"])]
+        indexes = [models.Index(fields=["user", "period"])]
 
 
-class CategorySpendingLimit(models.Model):
+class CategoryBudget(models.Model):
     user = models.ForeignKey(user, on_delete=models.CASCADE, null=True, blank=True)
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, null=True, blank=True
     )
-    budget_plan = models.CharField(choices=Plan, max_length=100, blank=True)
-    budget_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    name = models.CharField(max_length=100)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    period = models.CharField(choices=Plan, max_length=100)
 
     def __str__(self):
         return f"{self.user.username} - {self.category}"
@@ -75,12 +83,12 @@ class CategorySpendingLimit(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=["user", "category"]),
-            models.Index(fields=["user", "budget_plan"]),
+            models.Index(fields=["user", "period"]),
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "category", "budget_plan"],
-                name="unique_user_category_spending_limit",
+                fields=["user", "category", "period"],
+                name="unique_user_category_budget",
             )
         ]
 
@@ -96,6 +104,9 @@ class SavingPlan(models.Model):
     deadline = models.DateField(null=True, blank=True)
     status = models.CharField(
         choices=Saving_Plan_Status, max_length=100, null=True, blank=True
+    )
+    priority = models.CharField(
+        choices=Priority, max_length=10, default="Medium"
     )
 
     def __str__(self):
