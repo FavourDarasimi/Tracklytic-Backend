@@ -155,7 +155,7 @@ REST_FRAMEWORK = {
         "user": "1000/hour",
     },
     "EXCEPTION_HANDLER": "Tracklytic_Backend.exceptions.custom_exception_handler",
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_SCHEMA_CLASS": "Tracklytic_Backend.schema.TracklyticAutoSchema",
 }
 
 SPECTACULAR_SETTINGS = {
@@ -163,6 +163,16 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Personal finance tracking API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "TAGS": [
+        {"name": "Authentication", "description": "User authentication, registration, and profile management"},
+        {"name": "Transactions", "description": "Manage financial transactions (create, list, update, delete, restore, export)"},
+        {"name": "Categories", "description": "Manage transaction categories"},
+        {"name": "Recurring Transactions", "description": "Manage recurring transaction templates"},
+        {"name": "Budgets", "description": "Manage general and category-based spending budgets"},
+        {"name": "Saving Plans", "description": "Manage saving plans, check status, and renew goals"},
+        {"name": "Dashboard", "description": "Aggregated dashboard overview with charts and summaries"},
+        {"name": "AI Insights", "description": "AI-powered spending insights and recommendations"},
+    ],
     "ENUM_NAME_OVERRIDES": {
         "CurrencyEnum": [
             code for code, _ in [

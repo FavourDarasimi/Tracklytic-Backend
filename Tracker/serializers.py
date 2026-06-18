@@ -228,6 +228,12 @@ class RecurringTransactionSerializer(serializers.ModelSerializer):
         return obj.category.name if obj.category else None
 
 
+class MakeRecurringSerializer(serializers.Serializer):
+    frequency = serializers.ChoiceField(choices=['Daily', 'Weekly', 'Monthly', 'Yearly'])
+    next_due_date = serializers.DateField(required=False, allow_null=True)
+    end_date = serializers.DateField(required=False, allow_null=True)
+
+
 class BulkDeleteSerializer(serializers.Serializer):
     ids = serializers.ListField(
         child=serializers.IntegerField(), allow_empty=False

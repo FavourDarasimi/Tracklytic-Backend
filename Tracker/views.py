@@ -14,6 +14,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -36,6 +37,7 @@ from Tracker.serializers import (
     DashboardTransactionSerializer,
     GeneralSpendingLimitSerializer,
     ListTransactionSerializer,
+    MakeRecurringSerializer,
     RecurringTransactionSerializer,
     SavingPlanSerializer,
     TransactionSerializer,
@@ -67,6 +69,7 @@ def invalidate_dashboard_cache(user_id):
 # ── ViewSets (Standard Resources) ──
 
 
+@extend_schema(tags=["Categories"])
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
 
@@ -94,6 +97,7 @@ class TransactionFilter(filters.FilterSet):
     amount_min = filters.NumberFilter(field_name="amount", lookup_expr="gte")
     amount_max = filters.NumberFilter(field_name="amount", lookup_expr="lte")
     deleted = filters.BooleanFilter(field_name="is_deleted")
+    recurring = filters.BooleanFilter(field_name="recurring")
 
     class Meta:
         model = Transaction
@@ -105,6 +109,7 @@ class TransactionFilter(filters.FilterSet):
             "amount_min",
             "amount_max",
             "deleted",
+            "recurring",
         ]
 
     def filter_search(self, queryset, name, value):
@@ -115,6 +120,8 @@ class TransactionFilter(filters.FilterSet):
 
 @extend_schema(tags=["Transactions"])
 class TransactionViewSet(viewsets.ModelViewSet):
+    pagination_class = PageNumberPagination
+    page_size = 20
     filter_backends = [filters.DjangoFilterBackend, OrderingFilter]
     filterset_class = TransactionFilter
     ordering_fields = ["amount", "transaction_date", "created_at"]
@@ -303,7 +310,62 @@ class TransactionViewSet(viewsets.ModelViewSet):
         response["Content-Disposition"] = 'attachment; filename="transactions.csv"'
         return response
 
+    @extend_schema(
+        methods=["POST"],
+        request=MakeRecurringSerializer,
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "status": {"type": "string"},
+                    "message": {"type": "string"},
+                },
+            }
+        },
+    )
+    @action(detail=True, methods=["post"])
+    def make_recurring(self, request, pk=None):
+        try:
+            txn = Transaction.objects.get(id=pk, user=request.user)
+        except Transaction.DoesNotExist:
+            return create_error_response(
+                "Transaction not found", status.HTTP_404_NOT_FOUND
+            )
 
+        if RecurringTransaction.objects.filter(transaction=txn).exists():
+            return create_error_response(
+                "Transaction is already recurring"
+            )
+
+        serializer = MakeRecurringSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        if not data.get("next_due_date"):
+            delta = {
+                "Daily": relativedelta(days=1),
+                "Weekly": relativedelta(weeks=1),
+                "Monthly": relativedelta(months=1),
+                "Yearly": relativedelta(years=1),
+            }.get(data["frequency"])
+            data["next_due_date"] = datetime.now().date() + delta
+
+        msg = TransactionService.create_recurring_transaction(
+            data=data,
+            user=request.user,
+            category=txn.category,
+            amount=txn.amount,
+            transaction=txn,
+        )
+
+        txn.recurring = True
+        txn.save(update_fields=["recurring"])
+        invalidate_dashboard_cache(request.user.id)
+
+        return create_success_response(msg)
+
+
+@extend_schema(tags=["Recurring Transactions"])
 class RecurringTransactionViewSet(viewsets.ModelViewSet):
     serializer_class = RecurringTransactionSerializer
 
@@ -316,6 +378,7 @@ class RecurringTransactionViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Budgets"])
 class GeneralBudgetViewSet(viewsets.ModelViewSet):
     serializer_class = GeneralSpendingLimitSerializer
 
@@ -336,6 +399,7 @@ class GeneralBudgetViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
+@extend_schema(tags=["Budgets"])
 class CategoryBudgetViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySpendingLimitSerializer
 
@@ -367,6 +431,7 @@ class CategoryBudgetViewSet(viewsets.ModelViewSet):
         )
 
 
+@extend_schema(tags=["Saving Plans"])
 class SavingPlanViewSet(viewsets.ModelViewSet):
     serializer_class = SavingPlanSerializer
 
@@ -384,6 +449,7 @@ class SavingPlanViewSet(viewsets.ModelViewSet):
 
 class DashboardOverview(APIView):
     @extend_schema(
+        tags=["Dashboard"],
         parameters=[
             OpenApiParameter(
                 "period", str, required=False, description="1W, 1M, 3M, 1Y, all"
@@ -562,7 +628,7 @@ class DashboardOverview(APIView):
 
 
 class AiClient(APIView):
-    @extend_schema(responses={200: {"type": "object"}})
+    @extend_schema(tags=["AI Insights"], responses={200: {"type": "object"}})
     def get(self, request: Request):
         user = request.user
         transactions = Transaction.objects.filter(user=user).order_by(
@@ -577,7 +643,7 @@ class AiClient(APIView):
 
 
 class CheckStatusOfUserSavingPlans(APIView):
-    @extend_schema(responses={200: {"type": "object"}})
+    @extend_schema(tags=["Saving Plans"], responses={200: {"type": "object"}})
     def get(self, request: Request):
         saving_plans = SavingPlan.objects.filter(user=request.user)
         for plan in saving_plans:
@@ -588,7 +654,7 @@ class CheckStatusOfUserSavingPlans(APIView):
 class RenewSavingGoal(APIView):
     serializer_class = SavingPlanSerializer
 
-    @extend_schema(responses={200: {"type": "object"}})
+    @extend_schema(tags=["Saving Plans"], responses={200: {"type": "object"}})
     def put(self, request: Request, pk):
         data = request.data
         try:
@@ -608,6 +674,7 @@ class RenewSavingGoal(APIView):
             return create_error_response("Saving Plan does not exist")
 
 
+@extend_schema(tags=["Transactions"])
 class ParseReceiptView(APIView):
     def post(self, request, *args, **kwargs):
         receipt = request.FILES.get("receipt")
